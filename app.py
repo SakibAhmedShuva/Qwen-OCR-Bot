@@ -6,7 +6,7 @@ import json
 import time
 import re # For URL detection
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
-from flask_cors import CORS # <-- Import CORS
+from flask_cors import CORS
 import logging
 
 # Local imports
@@ -14,21 +14,17 @@ from qwen_model_handler import generate_chat_response_stream, get_model_and_proc
 
 # --- Flask App Setup ---
 app = Flask(__name__)
-CORS(app) # <-- Initialize CORS with default settings (allows all origins)
-# For more specific CORS configurations, see notes below.
+CORS(app) 
 
-app.secret_key = os.urandom(24) # For session management if Flask sessions are used
+app.secret_key = os.urandom(24) 
 
-# --- Logging Setup ---
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# --- In-memory store for session histories ---
 session_histories = {}
-MAX_HISTORY_LENGTH = 20 # Max number of messages (user + assistant pairs) to keep
+MAX_HISTORY_LENGTH = 20 
 
-# --- Helper Functions ---
 def get_session_history(session_id):
     if session_id not in session_histories:
         session_histories[session_id] = {"messages": [], "last_activity": time.time()}
@@ -37,18 +33,19 @@ def get_session_history(session_id):
 
 def add_to_session_history(session_id, role, content_data):
     history = get_session_history(session_id)
+    # Ensure content_data for user/assistant is always a list of content blocks
     if role == "system":
-        history.append({"role": role, "content": content_data})
+        history.append({"role": role, "content": content_data}) # System prompt is a string
     else:
-        if isinstance(content_data, str):
-            history.append({"role": role, "content": [{"type": "text", "text": content_data}]})
-        elif isinstance(content_data, list):
+        if isinstance(content_data, list): # Already formatted as list of content blocks
             history.append({"role": role, "content": content_data})
+        elif isinstance(content_data, str): # Simple text string
+            history.append({"role": role, "content": [{"type": "text", "text": content_data}]})
         else:
-            logger.error(f"Unsupported content_data type for role {role}: {type(content_data)}")
+            logger.error(f"Unsupported content_data type for role {role}: {type(content_data)}. Expected list or str.")
             return
 
-    if len(history) > MAX_HISTORY_LENGTH * 2:
+    if len(history) > MAX_HISTORY_LENGTH * 2: # System prompts + user/assistant pairs
         new_history = []
         system_prompts = [m for m in history if m['role'] == 'system']
         if system_prompts:
@@ -60,40 +57,90 @@ def add_to_session_history(session_id, role, content_data):
         logger.info(f"History for session {session_id} truncated.")
 
 
-def format_messages_for_qwen(session_id, system_prompt_override, user_prompt_text_with_potential_url):
+def format_messages_for_qwen(session_id, system_prompt_override, user_prompt_text, uploaded_image_data_url=None):
     current_history = get_session_history(session_id).copy()
     messages_for_model = []
+    
+    # Handle System Prompt
     has_system_prompt_in_history = any(m['role'] == 'system' for m in current_history)
-
     if system_prompt_override:
+        # If a new system prompt is provided, it replaces any existing ones for this call
         messages_for_model.append({"role": "system", "content": system_prompt_override})
+        # Remove old system prompts from current_history before extending
         current_history = [m for m in current_history if m['role'] != 'system']
     elif has_system_prompt_in_history:
         messages_for_model.extend([m for m in current_history if m['role'] == 'system'])
-        current_history = [m for m in current_history if m['role'] != 'system']
+        current_history = [m for m in current_history if m['role'] != 'system'] # Remove system prompts after adding them
     else:
+        # Default system prompt if none exists and none overridden
         messages_for_model.append({"role": "system", "content": "You are a helpful AI assistant."})
 
-    messages_for_model.extend(current_history)
+    # Add existing user/assistant messages from history
+    messages_for_model.extend(current_history) 
     
+    # Construct current user message content
     user_content_list = []
-    url_pattern = r'(https?://[^\s/$.?#].[^\s]*\.(?:jpg|jpeg|png|gif|webp))'
-    match = re.search(url_pattern, user_prompt_text_with_potential_url, re.IGNORECASE)
     
-    if match:
-        url = match.group(1)
-        text_parts = re.split(url_pattern, user_prompt_text_with_potential_url, 1, re.IGNORECASE)
-        
-        if text_parts[0].strip():
-            user_content_list.append({"type": "text", "text": text_parts[0].strip()})
-        
-        user_content_list.append({"type": "image_url", "image_url": {"url": url}})
-        logger.info(f"Image URL found and formatted for Qwen-VL: {url}")
-        
-        if len(text_parts) > 2 and text_parts[2].strip():
-            user_content_list.append({"type": "text", "text": text_parts[2].strip()})
+    # Prioritize explicitly uploaded image
+    if uploaded_image_data_url:
+        user_content_list.append({"type": "image_url", "image_url": {"url": uploaded_image_data_url}})
+        logger.info(f"Using explicitly uploaded image data URL for Qwen-VL.")
+        # The user_prompt_text can then be caption/instruction for this image
+        if user_prompt_text and user_prompt_text.strip():
+            user_content_list.append({"type": "text", "text": user_prompt_text.strip()})
     else:
-        user_content_list.append({"type": "text", "text": user_prompt_text_with_potential_url})
+        # Fallback: try to find an image URL in the text prompt
+        url_pattern = r'(https?://[^\s/$.?#].[^\s]*\.(?:jpg|jpeg|png|gif|webp|avif))|(data:image/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+)'
+        # Find all matches to handle text before, between, and after URLs
+        parts = []
+        last_end = 0
+        for match in re.finditer(url_pattern, user_prompt_text, re.IGNORECASE):
+            # Text before the URL
+            if match.start() > last_end:
+                parts.append({"type": "text", "text": user_prompt_text[last_end:match.start()].strip()})
+            
+            # The URL itself (either http or data)
+            url = match.group(0) # Full match
+            user_content_list.append({"type": "image_url", "image_url": {"url": url}})
+            logger.info(f"Image URL found in text and formatted for Qwen-VL: {url[:60]}...")
+            last_end = match.end()
+
+        # Text after the last URL, or the whole prompt if no URL
+        remaining_text = user_prompt_text[last_end:].strip()
+        if remaining_text:
+            parts.append({"type": "text", "text": remaining_text})
+        
+        if not user_content_list and parts: # Only text parts found
+            user_content_list.extend(parts)
+        elif parts: # Mix of image and text from parsed prompt
+             # Insert text parts around the image URLs. This logic needs to be careful.
+             # Simplified: if URLs were found, any text found via 'parts' is added.
+             # This assumes 'parts' contains text segments and image_urls were already added to user_content_list.
+             # This part needs refinement if complex interleaving is desired based purely on regex.
+             # For now, if user_content_list has images from regex, and parts has text, add text.
+             for p in parts:
+                 if p["type"] == "text" and p["text"]: # only add non-empty text
+                     # Avoid duplicating text if it was the entire prompt and no URL was found
+                     if not (len(user_content_list) == 0 and len(parts) == 1 and p["text"] == user_prompt_text.strip()):
+                        is_duplicate = False
+                        for existing_item in user_content_list:
+                            if existing_item["type"] == "text" and existing_item["text"] == p["text"]:
+                                is_duplicate = True
+                                break
+                        if not is_duplicate:
+                            user_content_list.append(p)
+
+
+        # If after all that, user_content_list is empty but user_prompt_text exists, add it as text.
+        if not user_content_list and user_prompt_text and user_prompt_text.strip():
+            user_content_list.append({"type": "text", "text": user_prompt_text.strip()})
+        elif not user_content_list and (not user_prompt_text or not user_prompt_text.strip()):
+            # Edge case: empty prompt, no uploaded image. Add a placeholder or handle as error?
+            # For Qwen, an empty user content might be an issue.
+            # Let's ensure there's at least one text item if nothing else.
+            user_content_list.append({"type": "text", "text": "Describe the image."}) # Default if truly empty
+            logger.warning("User prompt was empty and no image provided. Added default text.")
+
 
     messages_for_model.append({
         "role": "user",
@@ -121,6 +168,7 @@ def clear_backend_history():
     session_id = data.get('session_id')
     if session_id and session_id in session_histories:
         current_messages = session_histories[session_id]["messages"]
+        # Retain only system prompts, clear user/assistant messages
         system_prompts = [m for m in current_messages if m['role'] == 'system']
         session_histories[session_id]["messages"] = system_prompts
         logger.info(f"Cleared user/assistant messages from backend history for session: {session_id}. System prompts retained.")
@@ -136,43 +184,55 @@ def chat():
     try:
         data = request.json
         session_id = data.get('session_id')
-        user_prompt = data.get('prompt')
+        user_prompt_text = data.get('prompt', '') # Can be empty if image is primary
         system_prompt_override = data.get('system_prompt', '').strip()
         temperature = float(data.get('temperature', 0.7))
         model_id = data.get('model_id')
+        image_data_url = data.get('image_data_url') # New field for base64 image
 
-        if not all([session_id, user_prompt, model_id]):
-            logger.error(f"Missing required parameters: session_id={session_id}, prompt={user_prompt}, model_id={model_id}")
-            return jsonify({"error": "Missing required parameters (session_id, prompt, model_id)."}), 400
+        if not session_id or not model_id: # Prompt or image_data_url must exist
+            logger.error(f"Missing required parameters: session_id={session_id}, model_id={model_id}")
+            return jsonify({"error": "Missing required parameters (session_id, model_id)."}), 400
+        
+        if not user_prompt_text and not image_data_url:
+            logger.error(f"Missing content: Both prompt text and image_data_url are empty for session {session_id}.")
+            return jsonify({"error": "Prompt text or an image upload is required."}), 400
 
-        logger.info(f"Chat request for session {session_id}, model {model_id}. User prompt: '{user_prompt[:100]}...'")
+
+        logger.info(f"Chat request for session {session_id}, model {model_id}. User prompt: '{user_prompt_text[:100]}...'. Image uploaded: {bool(image_data_url)}")
         
-        messages_for_model = format_messages_for_qwen(session_id, system_prompt_override, user_prompt)
+        # Pass image_data_url to the formatter
+        messages_for_model = format_messages_for_qwen(session_id, system_prompt_override, user_prompt_text, image_data_url)
         
+        # Add the newly constructed user message (which might include image and text) to history
         if messages_for_model and messages_for_model[-1]["role"] == "user":
              add_to_session_history(session_id, 'user', messages_for_model[-1]["content"])
         else:
-             add_to_session_history(session_id, 'user', [{"type": "text", "text": user_prompt}])
+             # Fallback, should ideally not happen if format_messages_for_qwen is robust
+             logger.error("Failed to correctly format user message for history. Last model message was not user.")
+             # Attempt to add a simple text version if all else fails
+             add_to_session_history(session_id, 'user', [{"type": "text", "text": user_prompt_text or "Image interaction"}])
 
 
         def generate_sse_stream():
-            full_ai_response = ""
+            full_ai_response_text = "" # Store only text part of AI response for history
             try:
                 for chunk in generate_chat_response_stream(model_id, messages_for_model, temperature):
-                    if chunk:
-                        full_ai_response += chunk
+                    if chunk: # Qwen-VL might output special tokens or image markers; streamer should strip them.
+                        full_ai_response_text += chunk
                         sse_data = {"text_chunk": chunk, "is_final": False}
                         yield f"data: {json.dumps(sse_data)}\n\n"
                 
-                if full_ai_response:
-                    add_to_session_history(session_id, 'assistant', full_ai_response)
+                if full_ai_response_text:
+                     # Add AI's textual response to history
+                    add_to_session_history(session_id, 'assistant', full_ai_response_text)
                 
-                final_data = {"text_chunk": "", "full_response": full_ai_response, "is_final": True}
+                final_data = {"text_chunk": "", "full_response": full_ai_response_text, "is_final": True}
                 yield f"data: {json.dumps(final_data)}\n\n"
-                logger.info(f"Stream finished for session {session_id}. Full response length: {len(full_ai_response)}")
+                logger.info(f"Stream finished for session {session_id}. Full response length: {len(full_ai_response_text)}")
 
-            except ValueError as ve:
-                logger.error(f"ValueError during SSE generation for session {session_id}: {ve}", exc_info=False)
+            except ValueError as ve: # Model input errors, e.g. from processor or template
+                logger.error(f"ValueError during SSE generation for session {session_id}: {ve}", exc_info=False) # exc_info=False for brevity
                 error_data = {"error": f"Model input error: {str(ve)}", "is_final": True}
                 yield f"data: {json.dumps(error_data)}\n\n"
             except Exception as e:
@@ -186,17 +246,7 @@ def chat():
         logger.error(f"Error in /chat endpoint: {e}", exc_info=True)
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
-def preload_models():
-    logger.info("Attempting to preload default model...")
-    default_model_id = "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit"
-    try:
-        get_model_and_processor(default_model_id)
-        logger.info(f"Default model {default_model_id} preloading initiated/completed.")
-    except Exception as e:
-        logger.error(f"Failed to preload default model {default_model_id}: {e}", exc_info=True)
-
-
+# ... (preload_models and main run block remain the same) ...
 if __name__ == '__main__':
-    # preload_models()
     port = int(os.environ.get("PORT", 5001))
     app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
