@@ -4,7 +4,7 @@ import os
 import uuid
 import json
 import time
-import re # For URL detection
+import re
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 from flask_cors import CORS
 import logging
@@ -90,14 +90,17 @@ def format_messages_for_qwen(session_id, system_prompt_override, user_prompt_tex
             user_content_list.append({"type": "text", "text": user_prompt_text.strip()})
     else:
         # Fallback: try to find an image URL in the text prompt
+        # Regex updated to better handle various image extensions and data URLs
         url_pattern = r'(https?://[^\s/$.?#].[^\s]*\.(?:jpg|jpeg|png|gif|webp|avif))|(data:image/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+)'
-        # Find all matches to handle text before, between, and after URLs
+        
         parts = []
         last_end = 0
         for match in re.finditer(url_pattern, user_prompt_text, re.IGNORECASE):
             # Text before the URL
             if match.start() > last_end:
-                parts.append({"type": "text", "text": user_prompt_text[last_end:match.start()].strip()})
+                stripped_pre_text = user_prompt_text[last_end:match.start()].strip()
+                if stripped_pre_text:
+                    parts.append({"type": "text", "text": stripped_pre_text})
             
             # The URL itself (either http or data)
             url = match.group(0) # Full match
@@ -110,34 +113,25 @@ def format_messages_for_qwen(session_id, system_prompt_override, user_prompt_tex
         if remaining_text:
             parts.append({"type": "text", "text": remaining_text})
         
-        if not user_content_list and parts: # Only text parts found
-            user_content_list.extend(parts)
-        elif parts: # Mix of image and text from parsed prompt
-             # Insert text parts around the image URLs. This logic needs to be careful.
-             # Simplified: if URLs were found, any text found via 'parts' is added.
-             # This assumes 'parts' contains text segments and image_urls were already added to user_content_list.
-             # This part needs refinement if complex interleaving is desired based purely on regex.
-             # For now, if user_content_list has images from regex, and parts has text, add text.
-             for p in parts:
-                 if p["type"] == "text" and p["text"]: # only add non-empty text
-                     # Avoid duplicating text if it was the entire prompt and no URL was found
-                     if not (len(user_content_list) == 0 and len(parts) == 1 and p["text"] == user_prompt_text.strip()):
-                        is_duplicate = False
-                        for existing_item in user_content_list:
-                            if existing_item["type"] == "text" and existing_item["text"] == p["text"]:
-                                is_duplicate = True
-                                break
-                        if not is_duplicate:
-                            user_content_list.append(p)
+        # Consolidate text parts if they were split by URL parsing
+        # and add them to user_content_list if they aren't already there (as image URLs)
+        for p in parts:
+            if p["type"] == "text" and p["text"]:
+                 # Avoid adding duplicate text if it was the entire prompt and no URL was found
+                 # or if it's already somehow in user_content_list
+                is_duplicate = any(
+                    existing_item["type"] == "text" and existing_item["text"] == p["text"] 
+                    for existing_item in user_content_list
+                )
+                if not is_duplicate:
+                    user_content_list.append(p)
 
 
         # If after all that, user_content_list is empty but user_prompt_text exists, add it as text.
         if not user_content_list and user_prompt_text and user_prompt_text.strip():
             user_content_list.append({"type": "text", "text": user_prompt_text.strip()})
         elif not user_content_list and (not user_prompt_text or not user_prompt_text.strip()):
-            # Edge case: empty prompt, no uploaded image. Add a placeholder or handle as error?
-            # For Qwen, an empty user content might be an issue.
-            # Let's ensure there's at least one text item if nothing else.
+            # Edge case: empty prompt, no uploaded image.
             user_content_list.append({"type": "text", "text": "Describe the image."}) # Default if truly empty
             logger.warning("User prompt was empty and no image provided. Added default text.")
 
@@ -181,6 +175,7 @@ def clear_backend_history():
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    request_start_time = time.monotonic() # Start timing the request
     try:
         data = request.json
         session_id = data.get('session_id')
@@ -201,52 +196,95 @@ def chat():
 
         logger.info(f"Chat request for session {session_id}, model {model_id}. User prompt: '{user_prompt_text[:100]}...'. Image uploaded: {bool(image_data_url)}")
         
-        # Pass image_data_url to the formatter
         messages_for_model = format_messages_for_qwen(session_id, system_prompt_override, user_prompt_text, image_data_url)
         
-        # Add the newly constructed user message (which might include image and text) to history
         if messages_for_model and messages_for_model[-1]["role"] == "user":
              add_to_session_history(session_id, 'user', messages_for_model[-1]["content"])
         else:
-             # Fallback, should ideally not happen if format_messages_for_qwen is robust
              logger.error("Failed to correctly format user message for history. Last model message was not user.")
-             # Attempt to add a simple text version if all else fails
              add_to_session_history(session_id, 'user', [{"type": "text", "text": user_prompt_text or "Image interaction"}])
 
 
-        def generate_sse_stream():
-            full_ai_response_text = "" # Store only text part of AI response for history
+        @stream_with_context
+        def generate_sse_stream_with_timing():
+            sse_setup_start_time = time.monotonic()
+            full_ai_response_text = ""
+            response_metadata = {"first_token_time_ms": -1, "full_generation_time_ms": -1}
+            first_token_received = False
+            generation_start_time = 0 
+
             try:
                 for chunk in generate_chat_response_stream(model_id, messages_for_model, temperature):
-                    if chunk: # Qwen-VL might output special tokens or image markers; streamer should strip them.
+                    if not first_token_received:
+                        generation_start_time = time.monotonic() 
+                        # Time from sse_setup_start_time to first token includes model call setup, 
+                        # processor, and actual first token latency from model.
+                        response_metadata["first_token_time_ms"] = round((generation_start_time - sse_setup_start_time) * 1000)
+                        first_token_received = True
+
+                    if chunk:
                         full_ai_response_text += chunk
                         sse_data = {"text_chunk": chunk, "is_final": False}
                         yield f"data: {json.dumps(sse_data)}\n\n"
                 
                 if full_ai_response_text:
-                     # Add AI's textual response to history
                     add_to_session_history(session_id, 'assistant', full_ai_response_text)
                 
-                final_data = {"text_chunk": "", "full_response": full_ai_response_text, "is_final": True}
-                yield f"data: {json.dumps(final_data)}\n\n"
-                logger.info(f"Stream finished for session {session_id}. Full response length: {len(full_ai_response_text)}")
+                if first_token_received: 
+                    response_metadata["full_generation_time_ms"] = round((time.monotonic() - generation_start_time) * 1000)
+                else: 
+                    # If no tokens, full_generation_time is effectively the time spent trying.
+                    response_metadata["full_generation_time_ms"] = round((time.monotonic() - sse_setup_start_time) * 1000)
+                    if response_metadata["first_token_time_ms"] == -1: # Ensure TTFT is also set if no tokens
+                         response_metadata["first_token_time_ms"] = response_metadata["full_generation_time_ms"]
 
-            except ValueError as ve: # Model input errors, e.g. from processor or template
-                logger.error(f"ValueError during SSE generation for session {session_id}: {ve}", exc_info=False) # exc_info=False for brevity
+
+                final_data = {
+                    "text_chunk": "", 
+                    "full_response": full_ai_response_text, 
+                    "is_final": True,
+                    "response_time_stats": response_metadata 
+                }
+                yield f"data: {json.dumps(final_data)}\n\n"
+                
+                stream_total_duration_ms = round((time.monotonic() - sse_setup_start_time) * 1000)
+                logger.info(
+                    f"Stream finished for session {session_id}. Response length: {len(full_ai_response_text)}. "
+                    f"TTFT: {response_metadata['first_token_time_ms']}ms, "
+                    f"Gen time: {response_metadata['full_generation_time_ms']}ms. "
+                    f"Total stream handler time: {stream_total_duration_ms}ms."
+                )
+
+            except ValueError as ve: 
+                logger.error(f"ValueError during SSE gen for session {session_id}: {ve}", exc_info=False)
                 error_data = {"error": f"Model input error: {str(ve)}", "is_final": True}
                 yield f"data: {json.dumps(error_data)}\n\n"
             except Exception as e:
-                logger.error(f"Error during SSE generation for session {session_id}: {e}", exc_info=True)
+                logger.error(f"Error during SSE gen for session {session_id}: {e}", exc_info=True)
                 error_data = {"error": f"Model generation error: {str(e)}", "is_final": True}
                 yield f"data: {json.dumps(error_data)}\n\n"
-
-        return Response(stream_with_context(generate_sse_stream()), mimetype='text/event-stream')
+        
+        response = Response(generate_sse_stream_with_timing(), mimetype='text/event-stream')
+        request_duration_ms = round((time.monotonic() - request_start_time) * 1000)
+        logger.info(f"/chat request setup for session {session_id} completed in {request_duration_ms}ms. Streaming response initiated.")
+        return response
 
     except Exception as e:
-        logger.error(f"Error in /chat endpoint: {e}", exc_info=True)
+        request_duration_ms = round((time.monotonic() - request_start_time) * 1000)
+        logger.error(f"Error in /chat endpoint after {request_duration_ms}ms: {e}", exc_info=True)
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
-# ... (preload_models and main run block remain the same) ...
+def preload_models(): # Optional: Preload default model on startup
+    logger.info("Attempting to preload default model...")
+    default_model_id = "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit" # Or your preferred default
+    try:
+        get_model_and_processor(default_model_id)
+        logger.info(f"Default model {default_model_id} preloading initiated/completed.")
+    except Exception as e:
+        logger.error(f"Failed to preload default model {default_model_id}: {e}", exc_info=True)
+
+
 if __name__ == '__main__':
+    # preload_models() # Uncomment if you want to preload on start
     port = int(os.environ.get("PORT", 5001))
     app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
