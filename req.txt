@@ -4,6 +4,6 @@ torch==2.7.0
 transformers==4.51.3
 accelerate==1.6.0
 bitsandbytes==0.45.5
-
+Pillow==11.2.1
 
 #Flask torch transformers accelerate bitsandbytes
