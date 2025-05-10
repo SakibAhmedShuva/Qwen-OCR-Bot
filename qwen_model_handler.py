@@ -9,7 +9,11 @@ import numpy # Explicitly import numpy at the top level for early check
 from qwen_vl_utils import extract_pil_images_from_messages
 
 logger = logging.getLogger(__name__)
-logger.info(f"NumPy version imported by qwen_model_handler: {numpy.__version__}") 
+try:
+    logger.info(f"NumPy version imported by qwen_model_handler: {numpy.__version__}") 
+except NameError:
+    logger.error("NumPy failed to import in qwen_model_handler top level!")
+
 
 loaded_models = {}
 
@@ -30,8 +34,10 @@ def get_model_and_processor(model_id):
     if can_use_gpu:
         if model_is_bnb_quantized:
             logger.info(f"CUDA available and model {model_id} suggests BNB quantization. Attempting GPU 4-bit load.")
-            model_kwargs["torch_dtype"] = "auto" 
-            model_kwargs["device_map"] = {"": 0} 
+            model_kwargs["torch_dtype"] = "auto" # Let transformers decide, usually bfloat16/float16 for BNB
+            model_kwargs["device_map"] = {"": 0} # Target GPU 0, accelerate handles offload if needed
+            # The UserWarning previously indicated the model has its own quantization_config.
+            # We rely on from_pretrained to use that internal config.
             logger.info(
                 f"Configured for GPU 4-bit load with device_map={model_kwargs['device_map']}, "
                 f"torch_dtype={model_kwargs['torch_dtype']}. Model's internal quantization_config will be used."
@@ -52,9 +58,6 @@ def get_model_and_processor(model_id):
             )
 
     try:
-        # REMOVED the F.estimate_quantiles test block here as it was causing a misleading error.
-        # The successful model load indicates NumPy is likely fine with bitsandbytes.
-
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             model_id,
             **model_kwargs
@@ -77,7 +80,7 @@ def get_model_and_processor(model_id):
                 "   pip uninstall numpy bitsandbytes -y \n"
                 "   pip install numpy \n"
                 "   pip install bitsandbytes \n"
-                "3. If using GPU, ensure CUDA toolkit/drivers are compatible.",
+                "3. If using GPU, ensure your CUDA toolkit and drivers are compatible with the installed bitsandbytes version. ",
                 exc_info=True
             )
         elif "CUDA is required" in str(e) or "bitsandbytes" in str(e).lower():
@@ -99,29 +102,33 @@ def get_model_and_processor(model_id):
                 except Exception as cpu_e:
                     logger.error(f"CPU fallback loading also failed for {model_id}: {cpu_e}", exc_info=True)
                     raise RuntimeError(f"GPU load failed: {e}. CPU fallback also failed: {cpu_e}") from cpu_e
-            else:
+            else: # Already on CPU, and it failed
                 logger.error(f"Runtime error loading model {model_id} on CPU: {e}", exc_info=True)
         else: 
             logger.error(f"Unhandled RuntimeError loading model {model_id}: {e}", exc_info=True)
-        raise e
+        raise e # Re-raise the caught runtime error
 
-    except ValueError as ve:
+    except ValueError as ve: # Catch ValueErrors like the offloading one
         logger.error(f"ValueError during model loading for {model_id}: {ve}", exc_info=True)
         if "Some modules are dispatched on the CPU or the disk" in str(ve):
              logger.critical(
-                "CRITICAL ValueError: 'llm_int8_enable_fp32_cpu_offload=True' (or equivalent from model's config) "
-                "is not preventing error when modules are offloaded. Check model card or library versions."
+                "CRITICAL ValueError: The 'llm_int8_enable_fp32_cpu_offload=True' (or equivalent from model's internal config) "
+                "is still not preventing this error when modules are offloaded. "
+                "This could be due to the model's internal quantization_config not correctly supporting this, "
+                "or a deeper issue in the libraries. "
+                "Consider checking the model card for Unsloth for specific loading instructions or known issues with offloading."
              )
         raise ve
     except Exception as e: 
         logger.error(f"General error loading model {model_id}: {e}", exc_info=True)
         raise e
 
-# ... (generate_chat_response_stream function remains the same) ...
+
 def generate_chat_response_stream(model_id, messages_for_model, temperature, max_new_tokens=2048):
+    # Ensure numpy is importable at the start of this function too, for sanity check
     try:
-        import numpy
-        logger.debug(f"NumPy version in generate_chat_response_stream: {numpy.__version__}")
+        import numpy as np_check # Use a different alias to avoid conflict if numpy was already imported
+        logger.debug(f"NumPy version in generate_chat_response_stream: {np_check.__version__}")
     except ImportError:
         logger.critical("NumPy cannot be imported in generate_chat_response_stream! This is a fundamental environment issue.")
         raise RuntimeError("NumPy not found during stream generation setup.")
@@ -130,7 +137,7 @@ def generate_chat_response_stream(model_id, messages_for_model, temperature, max
 
     pil_images = extract_pil_images_from_messages(messages_for_model)
     if pil_images:
-        logger.info(f"Extracted {len(pil_images)} image(s) for processing for model input.") # Log context clarity
+        logger.info(f"Extracted {len(pil_images)} PIL image(s) for model input.")
     else:
         logger.info("No PIL images extracted for model input for this request.")
 
@@ -142,10 +149,11 @@ def generate_chat_response_stream(model_id, messages_for_model, temperature, max
         )
         logger.info(f"Generated text_prompt via apply_chat_template for {model_id}")
     except Exception as e:
-        logger.error(f"Error in apply_chat_template for {model_id} with messages: {messages_for_model}. Error: {e}", exc_info=True)
+        logger.error(f"Error in apply_chat_template for {model_id} with messages: {json.dumps(messages_for_model, indent=2)}. Error: {e}", exc_info=True)
         raise ValueError(f"Error preparing prompt with apply_chat_template: {e}. Check message format and image references.")
 
     try:
+        # Determine the target device from the model's device map or device attribute
         if hasattr(model, 'hf_device_map') and model.hf_device_map:
             if isinstance(model.device, torch.device) and model.device.type != 'meta':
                  target_device = model.device
@@ -157,12 +165,13 @@ def generate_chat_response_stream(model_id, messages_for_model, temperature, max
             target_device = model.device
 
         inputs = processor(
-            text=[text_prompt], # Must be a list
+            text=[text_prompt], # Must be a list for batching, even if single prompt
             images=pil_images if pil_images else None, # Pass loaded PIL images
             return_tensors="pt",
             padding=True 
         ).to(target_device) 
-        pixel_values_info = inputs.get('pixel_values')
+        
+        pixel_values_info = inputs.get('pixel_values') # PyTorch tensor or None
         image_info_str = f"Image tensor shape: {pixel_values_info.shape}, dtype: {pixel_values_info.dtype}" if pil_images and pixel_values_info is not None else "No image tensors"
 
         logger.info(f"Inputs processed for model {model_id} and sent to {target_device}. {image_info_str}")
@@ -182,31 +191,47 @@ def generate_chat_response_stream(model_id, messages_for_model, temperature, max
         pad_token_id = processor.tokenizer.eos_token_id
         if pad_token_id is None: 
             logger.error(f"CRITICAL: Both pad_token_id and eos_token_id are None for tokenizer of {model_id}.")
-            raise ValueError("Tokenizer missing pad_token_id and eos_token_id.")
-        logger.warning(f"pad_token_id was None, using eos_token_id: {pad_token_id}")
+            # Attempt to find a common EOS token as a last resort, e.g., for Qwen
+            try_eos_tokens = ["<|endoftext|>", "<|im_end|>"] # Common EOS tokens
+            for token_str in try_eos_tokens:
+                token_id = processor.tokenizer.convert_tokens_to_ids(token_str)
+                if token_id != processor.tokenizer.unk_token_id:
+                    pad_token_id = token_id
+                    logger.warning(f"Tokenizer missing pad_token_id and eos_token_id. Using '{token_str}' ({pad_token_id}) as fallback pad_token_id.")
+                    break
+            if pad_token_id is None: # Still None
+                 raise ValueError("Tokenizer missing pad_token_id and eos_token_id, and fallbacks failed.")
+        else:
+            logger.warning(f"pad_token_id was None, using eos_token_id: {pad_token_id}")
+
 
     eos_token_id_for_generation = processor.tokenizer.eos_token_id
     if isinstance(eos_token_id_for_generation, list):
+        # For Qwen-VL, <|im_end|> (ID: 151645) or other specific end tokens might be preferred.
         im_end_token_id = processor.tokenizer.convert_tokens_to_ids("<|im_end|>")
-        if im_end_token_id != processor.tokenizer.unk_token_id:
+        if im_end_token_id != processor.tokenizer.unk_token_id: # Check if token exists
              eos_token_id_for_generation = im_end_token_id
              logger.info(f"Using specific eos_token_id '<|im_end|>' ({eos_token_id_for_generation}) for generation.")
         else:
+            # Fallback: use the first ID in the list if specific one not found or not applicable
             eos_token_id_for_generation = eos_token_id_for_generation[0]
             logger.warning(f"eos_token_id is a list, specific '<|im_end|>' not applicable/found, using the first one: {eos_token_id_for_generation}")
     
     if eos_token_id_for_generation is None: 
-        logger.error(f"CRITICAL: eos_token_id_for_generation is None for {model_id}.")
-        raise ValueError("eos_token_id_for_generation cannot be None.")
+        logger.warning(f"eos_token_id_for_generation is None for {model_id}. Using pad_token_id ({pad_token_id}) as fallback for eos_token_id.")
+        eos_token_id_for_generation = pad_token_id # Fallback to pad_token_id if EOS is truly missing
+        if eos_token_id_for_generation is None: # Absolute last resort
+            raise ValueError("eos_token_id_for_generation cannot be None and fallback failed.")
+
 
     generation_kwargs = dict(
         **inputs,
         streamer=streamer,
         max_new_tokens=max_new_tokens,
         do_sample=True if temperature > 0.01 else False,
-        temperature=max(temperature, 0.01),
-        top_p=0.8 if temperature > 0.01 else None,
-        top_k=None,
+        temperature=max(temperature, 0.01), # Clamp temperature
+        top_p=0.8 if temperature > 0.01 else None, # Conditional top_p
+        top_k=None, # Usually top_p is preferred
         pad_token_id=pad_token_id,
         eos_token_id=eos_token_id_for_generation
     )
@@ -221,9 +246,10 @@ def generate_chat_response_stream(model_id, messages_for_model, temperature, max
     for new_text_chunk in streamer:
         if new_text_chunk:
             buffer += new_text_chunk
-            if ' ' in buffer or '\n' in buffer or len(buffer) > 5:
+            # Yield more frequently for better perceived responsiveness
+            if ' ' in buffer or '\n' in buffer or len(buffer) > 5: # Reduced buffer length
                 yield buffer
                 buffer = ""
-    if buffer:
+    if buffer: # Yield any remaining buffer content
         yield buffer
     logger.info(f"Finished generation stream for model {model_id}")
