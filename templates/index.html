@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qwen-OCR-Bot Studio</title>
     <style>
-        /* --- MODERN STYLES (Same as your provided styles - Truncated for brevity) --- */
         :root {
             --primary-color: #1976D2; /* Blue 700 */
             --primary-color-light: #64B5F6; /* Blue 300 */
@@ -36,575 +35,219 @@
             --transition-speed: 0.2s ease;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent; /* Or var(--background-main) if preferred */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #B0BEC5; /* Blue Grey 200 */
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #90A4AE; /* Blue Grey 300 */
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #B0BEC5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #90A4AE; }
 
         body {
-            font-family: var(--font-family);
-            margin: 0;
-            background-color: var(--background-main);
-            color: var(--text-primary);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            font-family: var(--font-family); margin: 0; background-color: var(--background-main);
+            color: var(--text-primary); display: flex; height: 100vh; overflow: hidden;
         }
-
-        .app-container {
-            display: flex;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Left Sidebar */
+        .app-container { display: flex; width: 100%; height: 100%; }
         .left-sidebar {
-            width: 250px; /* Slightly wider */
-            background-color: var(--background-card);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
-            transition: width var(--transition-speed);
+            width: 250px; background-color: var(--background-card); padding: 20px;
+            display: flex; flex-direction: column; border-right: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm); transition: width var(--transition-speed);
         }
-
         .left-sidebar .logo {
-            font-size: 1.5em; /* Adjusted for longer name */
-            font-weight: 700; /* Bolder */
-            color: var(--primary-color);
-            margin-bottom: 30px;
-            padding: 10px 0;
-            text-align: center; /* Centered logo */
+            font-size: 1.5em; font-weight: 700; color: var(--primary-color);
+            margin-bottom: 30px; padding: 10px 0; text-align: center;
         }
-
-        .left-sidebar nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
+        .left-sidebar nav ul { list-style: none; padding: 0; margin: 0; }
         .left-sidebar nav li {
-            padding: 12px 16px; /* More padding */
-            margin-bottom: 8px; /* More space */
-            border-radius: var(--border-radius-md);
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 500; /* Slightly bolder nav items */
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
-            color: var(--text-secondary);
+            padding: 12px 16px; margin-bottom: 8px; border-radius: var(--border-radius-md);
+            cursor: pointer; font-size: 0.95em; font-weight: 500; display: flex;
+            align-items: center; white-space: nowrap; color: var(--text-secondary);
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
-        .left-sidebar nav li .icon {
-            margin-right: 16px; /* More space for icon */
-            font-size: 1.3em; /* Larger icons */
-            min-width: 24px; /* Ensure alignment */
-            text-align: center;
-        }
-
-        .left-sidebar nav li:hover {
-            background-color: var(--background-hover);
-            color: var(--primary-color);
-        }
-
+        .left-sidebar nav li .icon { margin-right: 16px; font-size: 1.3em; min-width: 24px; text-align: center; }
+        .left-sidebar nav li:hover { background-color: var(--background-hover); color: var(--primary-color); }
         .left-sidebar nav li.active {
-            background-color: var(--background-active-nav);
-            color: var(--text-on-primary-active);
-            font-weight: 600;
+            background-color: var(--background-active-nav); color: var(--text-on-primary-active); font-weight: 600;
         }
-        .left-sidebar nav li.active .icon {
-             color: var(--primary-color);
-        }
-
-        .left-sidebar nav li small {
-            font-size: 0.8em;
-            opacity: 0.7;
-            margin-left: 4px;
-        }
-
+        .left-sidebar nav li.active .icon { color: var(--primary-color); }
         .history-panel {
-            padding-top: 16px;
-            flex-grow: 1;
-            overflow-y: auto;
-            display: none;
-            margin-top: 16px;
-            border-top: 1px solid var(--border-color);
+            padding-top: 16px; flex-grow: 1; overflow-y: auto; display: none;
+            margin-top: 16px; border-top: 1px solid var(--border-color);
         }
-        .history-panel h4 {
-            margin-top: 0;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: var(--text-primary);
-            padding: 0 8px; 
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .history-panel h4 { margin-top: 0; margin-bottom: 12px; font-weight: 600; color: var(--text-primary);
+            padding: 0 8px; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px; }
         .history-item {
-            padding: 10px 12px;
-            margin-bottom: 4px;
-            border-radius: var(--border-radius-sm);
-            cursor: pointer;
-            font-size: 0.88em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            border: 1px solid transparent;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-secondary);
-            transition: background-color var(--transition-speed), border-color var(--transition-speed);
+            padding: 10px 12px; margin-bottom: 4px; border-radius: var(--border-radius-sm); cursor: pointer;
+            font-size: 0.88em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            border: 1px solid transparent; display: flex; justify-content: space-between; align-items: center;
+            color: var(--text-secondary); transition: background-color var(--transition-speed), border-color var(--transition-speed);
         }
-        .history-item:hover {
-            background-color: var(--background-hover);
-        }
-        .history-item.selected-history {
-            background-color: var(--background-active-nav);
-            border-color: var(--primary-color-light);
-            color: var(--text-on-primary-active);
-        }
-        .history-item-name {
-            flex-grow: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .history-item-delete {
-            background: none;
-            border: none;
-            color: #E57373; /* Softer red */
-            font-size: 1.1em; /* Larger delete icon */
-            padding: 2px 4px;
-            cursor: pointer;
-            opacity: 0.7;
-            margin-left: 8px;
+        .history-item:hover { background-color: var(--background-hover); }
+        .history-item.selected-history { background-color: var(--background-active-nav); border-color: var(--primary-color-light); color: var(--text-on-primary-active); }
+        .history-item-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; }
+        .history-item-delete { background: none; border: none; color: #E57373; font-size: 1.1em;
+            padding: 2px 4px; cursor: pointer; opacity: 0.7; margin-left: 8px;
             transition: opacity var(--transition-speed), color var(--transition-speed);
         }
-        .history-item-delete:hover {
-            opacity: 1;
-            color: #D32F2F; /* Darker red on hover */
-        }
-
-        /* Main Content */
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--background-main);
-            padding: 0;
-            overflow-y: auto;
-        }
+        .history-item-delete:hover { opacity: 1; color: #D32F2F; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--background-main);
+            padding: 0; overflow-y: auto; }
         .main-content.hidden-view { display: none; }
-
         .main-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--background-card);
-            box-shadow: var(--shadow-sm);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            display: flex; justify-content: space-between; align-items: center; padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color); background-color: var(--background-card);
+            box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100;
         }
-
-        .main-header h2 {
-            margin: 0;
-            font-size: 1.35em;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
+        .main-header h2 { margin: 0; font-size: 1.35em; font-weight: 600; color: var(--text-primary); }
         .main-header-actions .icon-btn, #clear-backend-history-btn {
-            background: none;
-            border: none;
-            font-size: 1.4em;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 8px;
-            margin-left: 12px;
-            border-radius: 50%;
+            background: none; border: none; font-size: 1.4em; color: var(--text-secondary); cursor: pointer;
+            padding: 8px; margin-left: 12px; border-radius: 50%;
             transition: background-color var(--transition-speed), color var(--transition-speed);
         }
         #clear-backend-history-btn {
-            font-size: 0.85em;
-            padding: 8px 16px;
-            border-radius: var(--border-radius-lg);
-            background-color: var(--background-input);
-            border: 1px solid var(--border-color);
-            font-weight: 500;
+            font-size: 0.85em; padding: 8px 16px; border-radius: var(--border-radius-lg);
+            background-color: var(--background-input); border: 1px solid var(--border-color); font-weight: 500;
         }
-        #clear-backend-history-btn:hover {
-            background-color: var(--border-color);
-            color: var(--text-primary);
-        }
-
-        .main-header-actions .icon-btn:hover:not(:disabled) {
-            background-color: var(--background-hover);
-            color: var(--primary-color);
-        }
-        .main-header-actions .icon-btn:disabled {
-            color: var(--border-color-strong);
-            cursor: not-allowed;
-        }
-        .main-header-actions .icon-btn:disabled:hover {
-            background-color: transparent;
-        }
-
-        .chat-interface {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 24px;
-        }
-
-        #chat-output {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-        }
-        .welcome-message {
-            text-align: center;
-            margin: auto;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            color: var(--text-secondary);
-        }
-        .welcome-message h1 {
-            font-size: 2.6em; /* Slightly smaller for longer title */
-            font-weight: 300;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-        }
-         .welcome-message p { 
-            font-size: 1.1em;
-            max-width: 550px; /* Slightly wider for OCR instructions */
-            line-height: 1.6;
-        }
-
-        .message {
-            padding: 12px 18px;
-            border-radius: var(--border-radius-lg);
-            margin-bottom: 12px;
-            max-width: 75%;
-            word-wrap: break-word;
-            line-height: 1.6;
-            white-space: pre-wrap;
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.1s ease-out;
-        }
-        .message:hover {
-            transform: translateY(-1px);
-        }
-
-        .message.user {
-            background-color: var(--primary-color);
-            color: var(--text-light);
-            align-self: flex-end;
-            margin-left: auto;
-            border-bottom-right-radius: var(--border-radius-sm);
-        }
-        .message.ai {
-            background-color: var(--background-card);
-            color: var(--text-primary);
-            align-self: flex-start;
-            margin-right: auto;
-            border: 1px solid var(--border-color);
-            border-bottom-left-radius: var(--border-radius-sm);
-        }
-        .message.error {
-            background-color: #FFCDD2;
-            color: #D32F2F;
-            align-self: center;
-            text-align: center;
-            max-width: 90%;
-            border: 1px solid #E57373;
-        }
-        .message.loading { 
-            font-style: italic;
-            color: var(--text-secondary);
-            align-self: flex-start;
-            background-color: transparent;
-            box-shadow: none;
-            border: none;
-        }
-        .message.ai .cursor {
-            display: inline-block;
-            width: 8px;
-            height: 1.2em;
-            background-color: var(--text-primary);
-            animation: blink 1s step-end infinite;
-            margin-left: 3px;
-            vertical-align: text-bottom;
-        }
+        #clear-backend-history-btn:hover { background-color: var(--border-color); color: var(--text-primary); }
+        .main-header-actions .icon-btn:hover:not(:disabled) { background-color: var(--background-hover); color: var(--primary-color); }
+        .main-header-actions .icon-btn:disabled { color: var(--border-color-strong); cursor: not-allowed; }
+        .main-header-actions .icon-btn:disabled:hover { background-color: transparent; }
+        .chat-interface { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; }
+        #chat-output { flex-grow: 1; overflow-y: auto; padding: 0; display: flex; flex-direction: column; margin-bottom: 20px; }
+        .welcome-message { text-align: center; margin: auto; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; height: 100%; color: var(--text-secondary); }
+        .welcome-message h1 { font-size: 2.6em; font-weight: 300; color: var(--primary-color); margin-bottom: 16px; }
+        .welcome-message p { font-size: 1.1em; max-width: 550px; line-height: 1.6; }
+        .message { padding: 12px 18px; border-radius: var(--border-radius-lg); margin-bottom: 12px; max-width: 75%;
+            word-wrap: break-word; line-height: 1.6; white-space: pre-wrap; box-shadow: var(--shadow-sm);
+            transition: transform 0.1s ease-out; }
+        .message:hover { transform: translateY(-1px); }
+        .message.user { background-color: var(--primary-color); color: var(--text-light); align-self: flex-end;
+            margin-left: auto; border-bottom-right-radius: var(--border-radius-sm); }
+        .message.ai { background-color: var(--background-card); color: var(--text-primary); align-self: flex-start;
+            margin-right: auto; border: 1px solid var(--border-color); border-bottom-left-radius: var(--border-radius-sm); }
+        .message.error { background-color: #FFCDD2; color: #D32F2F; align-self: center; text-align: center;
+            max-width: 90%; border: 1px solid #E57373; }
+        .message.loading { font-style: italic; color: var(--text-secondary); align-self: flex-start;
+            background-color: transparent; box-shadow: none; border: none; }
+        .message.ai .cursor { display: inline-block; width: 8px; height: 1.2em; background-color: var(--text-primary);
+            animation: blink 1s step-end infinite; margin-left: 3px; vertical-align: text-bottom; }
         @keyframes blink { 50% { opacity: 0; } }
 
-        .system-prompt-container {
-            margin: 0 auto 16px auto;
-            max-width: 800px;
-            width: 100%;
-        }
-
-        #system-prompt-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-md);
-            font-size: 0.95em;
-            line-height: 1.5;
-            min-height: 60px;
-            max-height: 150px;
-            resize: vertical;
-            box-sizing: border-box;
-            background-color: var(--background-input);
-            color: var(--text-primary);
-            font-family: inherit;
-            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
-        }
-        #system-prompt-input::placeholder { color: var(--text-secondary); opacity: 0.7; }
-        #system-prompt-input:focus {
-            outline: none;
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-            background-color: var(--background-card);
-        }
-
-        .prompt-suggestions {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .suggestion-btn {
-            background-color: var(--background-card);
-            border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: var(--border-radius-lg);
-            cursor: pointer;
-            font-size: 0.85em;
+        .message .response-time-info {
+            font-size: 0.75em;
             color: var(--text-secondary);
-            font-weight: 500;
-            transition: background-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed);
+            opacity: 0.8;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border-color);
+            text-align: right; 
         }
-        .suggestion-btn:hover {
-            background-color: var(--background-hover);
-            color: var(--primary-color);
-            border-color: var(--primary-color-light);
-            box-shadow: var(--shadow-sm);
+        .message.user .response-time-info { display: none; }
+
+        .system-prompt-container { margin: 0 auto 16px auto; max-width: 800px; width: 100%; }
+        #system-prompt-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md); font-size: 0.95em; line-height: 1.5; min-height: 60px;
+            max-height: 150px; resize: vertical; box-sizing: border-box; background-color: var(--background-input);
+            color: var(--text-primary); font-family: inherit;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed); }
+        #system-prompt-input::placeholder { color: var(--text-secondary); opacity: 0.7; }
+        #system-prompt-input:focus { outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2); background-color: var(--background-card); }
+        .prompt-suggestions { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .suggestion-btn { background-color: var(--background-card); border: 1px solid var(--border-color);
+            padding: 8px 16px; border-radius: var(--border-radius-lg); cursor: pointer; font-size: 0.85em;
+            color: var(--text-secondary); font-weight: 500;
+            transition: background-color var(--transition-speed), color var(--transition-speed), box-shadow var(--transition-speed); }
+        .suggestion-btn:hover { background-color: var(--background-hover); color: var(--primary-color);
+            border-color: var(--primary-color-light); box-shadow: var(--shadow-sm); }
+        
+        .prompt-input-area-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 800px; margin: 0 auto; 
+        }
+        #uploaded-image-preview-container {
+            margin-bottom: 10px; position: relative; max-width: 300px; 
+            max-height: 200px; overflow: hidden; border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color);
+        }
+        #uploaded-image-preview-container img {
+            display: block; max-width: 100%; max-height: 200px; object-fit: contain;
+        }
+        #uploaded-image-preview-container .clear-image-btn {
+            position: absolute; top: 5px; right: 5px; background-color: rgba(0,0,0,0.5);
+            color: white; border: none; border-radius: 50%; width: 24px; height: 24px;
+            font-size: 16px; line-height: 24px; text-align: center; cursor: pointer; opacity: 0.8;
+        }
+        #uploaded-image-preview-container .clear-image-btn:hover { opacity: 1; }
+        .upload-image-filename {
+            font-size: 0.8em; color: var(--text-secondary); margin-bottom: 10px; text-align: center;
         }
 
         .prompt-input-area {
-            display: flex;
-            align-items: flex-end;
-            border: 1px solid var(--border-color-strong);
-            border-radius: var(--border-radius-lg);
-            padding: 8px 8px 8px 16px;
-            background-color: var(--background-card);
-            margin: 0 auto;
-            max-width: 800px;
-            width: 100%;
-            box-shadow: var(--shadow-md);
+            display: flex; align-items: flex-end; border: 1px solid var(--border-color-strong);
+            border-radius: var(--border-radius-lg); padding: 8px 8px 8px 16px;
+            background-color: var(--background-card); width: 100%; box-shadow: var(--shadow-md);
             transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
         }
-        .prompt-input-area:focus-within {
-            border-color: var(--border-focus);
-            box-shadow: var(--shadow-md), 0 0 0 2px rgba(25, 118, 210, 0.2);
+        .prompt-input-area:focus-within { border-color: var(--border-focus);
+            box-shadow: var(--shadow-md), 0 0 0 2px rgba(25, 118, 210, 0.2); }
+        
+        #upload-image-btn { 
+            background: none; border: none; color: var(--text-secondary); font-size: 1.5em; 
+            padding: 8px 12px 8px 0; cursor: pointer; margin-right: 8px; 
+            transition: color var(--transition-speed);
         }
+        #upload-image-btn:hover { color: var(--primary-color); }
 
         #prompt-input {
-            flex-grow: 1;
-            border: none;
-            outline: none;
-            padding: 10px 0;
-            font-size: 1em;
-            resize: none;
-            background-color: transparent;
-            min-height: 24px;
-            max-height: 150px;
-            overflow-y: auto;
-            color: var(--text-primary);
-            line-height: 1.5;
+            flex-grow: 1; border: none; outline: none; padding: 10px 0; font-size: 1em;
+            resize: none; background-color: transparent; min-height: 24px; max-height: 150px;
+            overflow-y: auto; color: var(--text-primary); line-height: 1.5;
         }
         #prompt-input::placeholder { color: var(--text-secondary); opacity: 0.7; }
-
         #run-button {
-            background-color: var(--primary-color);
-            color: var(--text-light);
-            border: none;
-            padding: 10px 20px;
-            border-radius: var(--border-radius-md);
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 600;
-            margin-left: 10px;
+            background-color: var(--primary-color); color: var(--text-light); border: none;
+            padding: 10px 20px; border-radius: var(--border-radius-md); cursor: pointer;
+            font-size: 0.95em; font-weight: 600; margin-left: 10px;
             transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
             box-shadow: var(--shadow-sm);
         }
         #run-button .shortcut { font-size: 0.8em; opacity: 0.8; margin-left: 5px; }
-        #run-button:hover:not(:disabled) {
-            background-color: var(--primary-color-dark);
-            box-shadow: var(--shadow-md);
-        }
-        #run-button:disabled {
-            background-color: var(--primary-color-light);
-            cursor: not-allowed;
-            opacity: 0.7;
-            box-shadow: none;
-        }
-
-        /* Right Sidebar */
-        .right-sidebar {
-            width: 320px;
-            background-color: var(--background-card);
-            padding: 20px;
-            border-left: 1px solid var(--border-color);
-            overflow-y: auto;
-            font-size: 0.9em;
-            box-shadow: var(--shadow-sm);
-            transition: width var(--transition-speed);
-        }
+        #run-button:hover:not(:disabled) { background-color: var(--primary-color-dark); box-shadow: var(--shadow-md); }
+        #run-button:disabled { background-color: var(--primary-color-light); cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+        
+        .right-sidebar { width: 320px; background-color: var(--background-card); padding: 20px;
+            border-left: 1px solid var(--border-color); overflow-y: auto; font-size: 0.9em;
+            box-shadow: var(--shadow-sm); transition: width var(--transition-speed); }
         .right-sidebar.hidden-view { display: none; }
-
-        .right-sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .right-sidebar-header h3 {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1.15em;
-        }
-        .icon-btn-sm {
-            background: none;
-            border: none;
-            font-size: 1.3em;
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 50%;
-            transition: background-color var(--transition-speed), color var(--transition-speed);
-        }
-        .icon-btn-sm:hover:not(:disabled) {
-            background-color: var(--background-hover);
-            color: var(--primary-color);
-        }
+        .right-sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+            padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+        .right-sidebar-header h3 { margin: 0; font-weight: 600; color: var(--text-primary); font-size: 1.15em; }
+        .icon-btn-sm { background: none; border: none; font-size: 1.3em; color: var(--text-secondary); cursor: pointer;
+            padding: 6px; border-radius: 50%; transition: background-color var(--transition-speed), color var(--transition-speed); }
+        .icon-btn-sm:hover:not(:disabled) { background-color: var(--background-hover); color: var(--primary-color); }
         .icon-btn-sm:disabled { color: var(--border-color-strong); cursor: not-allowed; }
         .icon-btn-sm:disabled:hover { background-color: transparent; }
-
-        .settings-section {
-            margin-bottom: 24px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
-        }
+        .settings-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
         .settings-section:last-child { border-bottom: none; padding-bottom: 0; }
-        
-        #model-select, #temperature-value {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: var(--border-radius-md);
-            border: 1px solid var(--border-color-strong);
-            background-color: var(--background-input);
-            font-size: 0.9em;
-            color: var(--text-primary);
-            box-sizing: border-box;
-            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
-        }
-        #model-select:focus, #temperature-value:focus {
-            outline: none;
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
-            background-color: var(--background-card);
-        }
-
-        .model-info-text {
-            font-size: 0.8em;
-            color: var(--text-secondary);
-            padding: 10px;
-            margin-top: 8px;
-            margin-bottom: 16px;
-            line-height: 1.5;
-            background-color: var(--background-input);
-            border-radius: var(--border-radius-sm);
-            border: 1px solid var(--border-color);
-        }
-
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-        }
+        #model-select, #temperature-value { width: 100%; padding: 10px 12px; border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color-strong); background-color: var(--background-input); font-size: 0.9em;
+            color: var(--text-primary); box-sizing: border-box;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed); }
+        #model-select:focus, #temperature-value:focus { outline: none; border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2); background-color: var(--background-card); }
+        .model-info-text { font-size: 0.8em; color: var(--text-secondary); padding: 10px; margin-top: 8px;
+            margin-bottom: 16px; line-height: 1.5; background-color: var(--background-input);
+            border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: var(--text-primary); }
         .setting-item:last-child { margin-bottom: 0; }
-        .setting-item label {
-            color: var(--text-secondary);
-            font-weight: 500;
-            margin-right: 10px;
-        }
-        #temperature {
-            flex-grow: 1;
-            margin: 0 10px;
-            cursor: pointer;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-            outline: none;
-        }
-        #temperature::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid var(--background-card);
-            box-shadow: var(--shadow-sm);
-        }
-        #temperature::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            background: var(--primary-color);
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid var(--background-card);
-            box-shadow: var(--shadow-sm);
-        }
-        #temperature-value {
-            width: 60px;
-            padding: 8px;
-            text-align: center;
-            margin-left: 0;
-        }
+        .setting-item label { color: var(--text-secondary); font-weight: 500; margin-right: 10px; }
+        #temperature { flex-grow: 1; margin: 0 10px; cursor: pointer; -webkit-appearance: none; appearance: none;
+            height: 8px; background: var(--border-color); border-radius: 4px; outline: none; }
+        #temperature::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
+            background: var(--primary-color); border-radius: 50%; cursor: pointer; border: 2px solid var(--background-card);
+            box-shadow: var(--shadow-sm); }
+        #temperature::-moz-range-thumb { width: 18px; height: 18px; background: var(--primary-color); border-radius: 50%;
+            cursor: pointer; border: 2px solid var(--background-card); box-shadow: var(--shadow-sm); }
+        #temperature-value { width: 60px; padding: 8px; text-align: center; margin-left: 0; }
     </style>
 </head>
 <body>
@@ -636,7 +279,7 @@
                 <div id="chat-output">
                     <div class="welcome-message">
                         <h1 id="welcome-header">Qwen-OCR-Bot Studio</h1>
-                        <p>Enter an image URL or describe an image for text extraction. For best OCR results, ensure the image is clear.
+                        <p>Upload an image or enter an image URL to extract text. 
                            You can also use the system prompt to guide the extraction process.
                         </p>
                     </div>
@@ -647,11 +290,21 @@
                 <div class="prompt-suggestions">
                     <button class="suggestion-btn">Extract text from image: [your_image_url.jpg]</button>
                     <button class="suggestion-btn">What does the sign in this image say: [your_image_url.png]</button>
-                    <button class="suggestion-btn">Transcribe the document at: [document_image_url.pdf_page.jpg]</button>
                 </div>
-                <div class="prompt-input-area">
-                    <textarea id="prompt-input" placeholder="Your prompt or image URL... (Press Enter to send)"></textarea>
-                    <button id="run-button">Run <span class="shortcut">↵</span></button>
+
+                <div class="prompt-input-area-wrapper">
+                    <div id="uploaded-image-preview-container" style="display:none;">
+                        <img id="uploaded-image-preview" src="#" alt="Uploaded Image Preview">
+                        <button class="clear-image-btn" id="clear-uploaded-image-btn" title="Clear uploaded image">×</button>
+                    </div>
+                    <div id="upload-image-filename" class="upload-image-filename" style="display:none;"></div>
+
+                    <div class="prompt-input-area">
+                        <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                        <button id="upload-image-btn" title="Upload Image">🖼️</button> 
+                        <textarea id="prompt-input" placeholder="Describe uploaded image or enter image URL... (Enter to send)"></textarea>
+                        <button id="run-button">Run <span class="shortcut">↵</span></button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -672,7 +325,7 @@
                 </div>
                 <div class="setting-item">
                     <label for="temperature">Temperature</label>
-                    <input type="range" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0.01"> <!-- Lower default temp for OCR, finer step -->
+                    <input type="range" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0.01">
                     <input type="number" id="temperature-value" value="0.01" min="0" max="1" step="0.01">
                 </div>
             </div>
@@ -680,631 +333,465 @@
     </div>
 
     <script>
-        // JAVASCRIPT CODE (No changes from your original, as it was mostly functional)
-        // The core issues were backend. For brevity, I'm not repeating the ~700 lines of JS.
-        // Assuming your JS handles DOM manipulation, event listeners, and API calls correctly.
-        // Key interactions with the backend changes:
-        // 1. Sending `prompt` which now can contain an image URL that `app.py` will parse.
-        // 2. `system_prompt` is sent.
-        // 3. `model_id` and `temperature` are sent.
-        // 4. SSE stream handling (`text_chunk`, `is_final`, `error`).
-        // 5. Local history management.
-        // The existing JS should be compatible with the backend Python changes.
-        // Make sure API_CHAT_URL, API_CREATE_SESSION_URL, API_CLEAR_HISTORY_URL match the Flask routes.
-        // The DEFAULT_MODEL_ID should match one available.
-        // The modelsData array should reflect the models you intend to use.
+    document.addEventListener('DOMContentLoaded', () => {
+        const APP_NAME = "Qwen-OCR-Bot";
+        const DEFAULT_MODEL_ID = "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit";
+        const DEFAULT_TEMPERATURE = 0.01;
+        const CHAT_HISTORY_INDEX_KEY = 'qwenOcrBotChatHistoryIndex';
+        const MAX_IMAGE_SIZE_MB = 5; 
 
-        // !!! IMPORTANT: Paste your original JavaScript here !!!
-        // The one starting with: document.addEventListener('DOMContentLoaded', () => { ... });
-        // (As provided in the initial problem description)
+        const appLogo = document.getElementById('app-logo');
+        const welcomeHeader = document.getElementById('welcome-header');
+        const welcomeParagraph = document.querySelector('.welcome-message p');
+        const promptInput = document.getElementById('prompt-input');
+        const systemPromptInput = document.getElementById('system-prompt-input');
+        const runButton = document.getElementById('run-button');
+        const chatOutput = document.getElementById('chat-output');
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperature-value');
+        const modelSelect = document.getElementById('model-select');
+        const modelInfoDiv = document.getElementById('model-info');
+        const tokenCountSpan = document.getElementById('token-count');
+        const welcomeMessageContainer = document.querySelector('.welcome-message');
+        const suggestionButtons = document.querySelectorAll('.suggestion-btn');
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const clearBackendHistoryBtn = document.getElementById('clear-backend-history-btn');
+        const resetSettingsBtn = document.getElementById('reset-settings-btn');
+        const navChat = document.getElementById('nav-chat');
+        const navHistory = document.getElementById('nav-history');
+        const historyPanelDisplay = document.getElementById('history-panel-display');
+        const historyListUL = document.getElementById('history-list');
+        const chatPromptHeader = document.getElementById('chat-prompt-header');
+        const imageUploadInput = document.getElementById('image-upload-input');
+        const uploadImageBtn = document.getElementById('upload-image-btn');
+        const uploadedImagePreviewContainer = document.getElementById('uploaded-image-preview-container');
+        const uploadedImagePreview = document.getElementById('uploaded-image-preview');
+        const clearUploadedImageBtn = document.getElementById('clear-uploaded-image-btn');
+        const uploadImageFilenameDiv = document.getElementById('upload-image-filename');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- APP CONFIG ---
-            const APP_NAME = "Qwen-OCR-Bot"; // Updated App Name
-            const DEFAULT_MODEL_ID = "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit";
-            const DEFAULT_TEMPERATURE = 0.01; // Lowered for OCR consistency
-            const CHAT_HISTORY_KEY = 'qwenOcrBotChatHistory'; 
-            const CHAT_HISTORY_INDEX_KEY = 'qwenOcrBotChatHistoryIndex';
+        const API_CHAT_URL = '/chat';
+        const API_CREATE_SESSION_URL = '/create-session';
+        const API_CLEAR_HISTORY_URL = '/clear-backend-history';
 
-            // --- DOM Elements ---
-            const appLogo = document.getElementById('app-logo');
-            const welcomeHeader = document.getElementById('welcome-header');
-            const welcomeParagraph = document.querySelector('.welcome-message p'); // For updating text
-            const promptInput = document.getElementById('prompt-input');
-            const systemPromptInput = document.getElementById('system-prompt-input');
-            const runButton = document.getElementById('run-button');
-            const chatOutput = document.getElementById('chat-output');
-            const temperatureSlider = document.getElementById('temperature');
-            const temperatureValue = document.getElementById('temperature-value');
-            const modelSelect = document.getElementById('model-select');
-            const modelInfoDiv = document.getElementById('model-info');
-            const tokenCountSpan = document.getElementById('token-count');
-            const welcomeMessageContainer = document.querySelector('.welcome-message');
-            const suggestionButtons = document.querySelectorAll('.suggestion-btn');
-            const newChatBtn = document.getElementById('new-chat-btn');
-            const clearBackendHistoryBtn = document.getElementById('clear-backend-history-btn');
-            const resetSettingsBtn = document.getElementById('reset-settings-btn');
-            const navChat = document.getElementById('nav-chat');
-            const navHistory = document.getElementById('nav-history');
-            const historyPanelDisplay = document.getElementById('history-panel-display');
-            const historyListUL = document.getElementById('history-list');
-            const mainChatContent = document.getElementById('main-chat-content');
-            const rightSettingsSidebar = document.getElementById('right-settings-sidebar');
-            const chatPromptHeader = document.getElementById('chat-prompt-header');
+        const modelsData = [ 
+            { id: "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit", group: "Chat", name: "Qwen2.5-VL 3B (OCR)", contextWindow: 8192, rpm: "N/A", rpd: "N/A", tpm: "N/A", tpd: "N/A" },
+            { id: "unsloth/Qwen2.5-VL-7B-Instruct-unsloth-bnb-4bit", group: "Chat", name: "Qwen2.5-VL 7B (OCR)", contextWindow: 8192, rpm: "N/A", rpd: "N/A", tpm: "N/A", tpd: "N/A" }
+        ];
+        const chatModels = modelsData.filter(model => model.group === "Chat");
+        
+        let currentChatSession = createNewFrontendChatObject();
+        let chatHistoryIndex = [];
+        let currentBackendSessionId = null;
+        let uploadedImageDataUrl = null; 
+        let currentRequestStartTime = 0;
 
-            const API_CHAT_URL = '/chat';
-            const API_CREATE_SESSION_URL = '/create-session';
-            const API_CLEAR_HISTORY_URL = '/clear-backend-history';
+        function initializeApp() {
+            if (appLogo) appLogo.textContent = APP_NAME;
+            if (welcomeHeader) welcomeHeader.textContent = `Welcome to ${APP_NAME}`;
+            if (welcomeParagraph) welcomeParagraph.textContent = "Upload an image or enter an image URL to extract text. You can also use the system prompt to guide the extraction process.";
+            if (systemPromptInput) systemPromptInput.value = "You are an expert Optical Character Recognition (OCR) assistant. Your primary task is to meticulously extract ALL text, numbers, and symbols visible in any provided image or described scene. Transcribe the text exactly as it appears. Only output the extracted text. If no image is clearly referenced or uploaded, state that you need an image or image URL to perform OCR.";
 
-            const modelsData = [ 
-                {
-                    id: "unsloth/Qwen2.5-VL-3B-Instruct-unsloth-bnb-4bit",
-                    group: "Chat", // Keep group as "Chat" for UI compatibility
-                    name: "Qwen2.5-VL 3B (OCR Optimized)",
-                    rpm: "N/A", rpd: "N/A", tpm: "N/A", tpd: "N/A",
-                    contextWindow: 8192 // Example, check model card
-                },
-                {
-                    id: "unsloth/Qwen2.5-VL-7B-Instruct-unsloth-bnb-4bit",
-                    group: "Chat",
-                    name: "Qwen2.5-VL 7B (OCR Optimized)",
-                    rpm: "N/A", rpd: "N/A", tpm: "N/A", tpd: "N/A",
-                    contextWindow: 8192 // Example, check model card
+            loadChatHistoryIndex();
+            populateModelDropdown();
+            resetSettingsToDefault(); 
+            createNewBackendSession(() => { startNewFrontendChatSession(); promptInput.focus(); });
+            setupImageUploadListeners();
+        }
+
+        function setupImageUploadListeners() {
+            if (uploadImageBtn) uploadImageBtn.addEventListener('click', () => imageUploadInput.click());
+            if (imageUploadInput) imageUploadInput.addEventListener('change', handleImageFileSelect);
+            if (clearUploadedImageBtn) clearUploadedImageBtn.addEventListener('click', clearUploadedImage);
+        }
+
+        function handleImageFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+                    alert(`Image too large. Max ${MAX_IMAGE_SIZE_MB}MB.`); imageUploadInput.value = ''; return;
                 }
-                // Add other Qwen-VL models as needed
-            ];
-            const chatModels = modelsData.filter(model => model.group === "Chat");
-            
-            let currentChatSession = createNewFrontendChatObject();
-            let chatHistoryIndex = [];
-            let currentBackendSessionId = null;
-
-            // --- Initialization ---
-            function initializeApp() {
-                if (appLogo) appLogo.textContent = APP_NAME;
-                if (welcomeHeader) welcomeHeader.textContent = `Welcome to ${APP_NAME}`;
-                if (welcomeParagraph) welcomeParagraph.textContent = "Enter an image URL in the prompt below to extract text, or ask about an image. For best OCR results, use a clear system prompt and ensure the image is high quality.";
-                if (systemPromptInput) systemPromptInput.value = "You are an expert Optical Character Recognition (OCR) assistant. Your primary task is to meticulously extract ALL text, numbers, and symbols visible in any provided image or described scene. Transcribe the text exactly as it appears. Only output the extracted text. If no image is clearly referenced, state that you need an image or image URL to perform OCR.";
-
-
-                loadChatHistoryIndex();
-                populateModelDropdown();
-                resetSettingsToDefault(); 
-                
-                createNewBackendSession(() => {
-                    startNewFrontendChatSession(); 
-                    promptInput.focus();
-                });
-            }
-
-            // --- Backend Session Management ---
-            async function createNewBackendSession(callback) {
-                try {
-                    const response = await fetch(API_CREATE_SESSION_URL, { method: 'POST' });
-                    const data = await response.json();
-                    if (data.status === 'success' && data.session_id) {
-                        currentBackendSessionId = data.session_id;
-                        console.log("New backend session created:", currentBackendSessionId);
-                        if (callback) callback();
-                    } else {
-                        console.error("Failed to create backend session:", data.message);
-                        addMessageToChatDOM(`Error: Could not start a new backend session. ${data.message || ''}`, 'ai', 'error');
-                    }
-                } catch (error) {
-                    console.error("Error calling /create-session:", error);
-                    addMessageToChatDOM(`Error: Network issue creating backend session. ${error.message}`, 'ai', 'error');
+                if (!file.type.startsWith('image/')) {
+                    alert('Invalid file type. Please upload an image.'); imageUploadInput.value = ''; return;
                 }
-            }
-
-            async function clearCurrentBackendHistory() {
-                if (!currentBackendSessionId) {
-                    alert("No active backend session to clear.");
-                    return;
-                }
-                if (!confirm("This will clear the AI's memory (user/assistant messages) for the current conversation on the server. System prompts and local display will remain. Continue?")) {
-                    return;
-                }
-                try {
-                    const response = await fetch(API_CLEAR_HISTORY_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ session_id: currentBackendSessionId })
-                    });
-                    const data = await response.json();
-                    if (data.status === 'success') {
-                        alert(data.message || "Backend session memory cleared.");
-                        console.log("Backend history cleared for session:", currentBackendSessionId);
-                    } else {
-                        alert(`Failed to clear backend history: ${data.message}`);
-                    }
-                } catch (error) {
-                    console.error("Error calling /clear-backend-history:", error);
-                    alert(`Network error clearing backend history: ${error.message}`);
-                }
-            }
-
-            // --- Frontend Chat Session & Local History Management ---
-            function createNewFrontendChatObject(id = `ocr-chat-${Date.now()}`) {
-                return {
-                    id: id, 
-                    name: `Extraction ${new Date().toLocaleString()}`, 
-                    systemPrompt: systemPromptInput.value || "You are an expert Optical Character Recognition (OCR) assistant. Your primary task is to meticulously extract ALL text, numbers, and symbols visible in any provided image or described scene. Transcribe the text exactly as it appears. Only output the extracted text. If no image is clearly referenced, state that you need an image or image URL to perform OCR.",
-                    model: modelSelect.value || DEFAULT_MODEL_ID,
-                    temperature: parseFloat(temperatureSlider.value) || DEFAULT_TEMPERATURE,
-                    messages: [], 
-                    timestamp: Date.now()
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedImageDataUrl = e.target.result;
+                    uploadedImagePreview.src = uploadedImageDataUrl;
+                    uploadedImagePreviewContainer.style.display = 'block';
+                    uploadImageFilenameDiv.textContent = `Selected: ${file.name}`;
+                    uploadImageFilenameDiv.style.display = 'block';
+                    promptInput.placeholder = "Describe uploaded image or add instructions...";
                 };
+                reader.readAsDataURL(file);
             }
+        }
 
-            function startNewFrontendChatSession(loadDefaults = true) {
-                currentChatSession = createNewFrontendChatObject(); 
-                if (loadDefaults) {
-                    systemPromptInput.value = currentChatSession.systemPrompt; 
-                    resetSettingsToDefault(); 
-                }
-                chatOutput.innerHTML = ''; 
-                renderWelcomeMessage();
-                promptInput.value = '';
-                adjustTextareaHeight(promptInput);
-                adjustTextareaHeight(systemPromptInput);
-                updateChatPromptHeader();
-                
-                createNewBackendSession(() => {
-                    console.log("New frontend extraction task started, associated with new backend session:", currentBackendSessionId);
-                    promptInput.focus();
+        function clearUploadedImage() {
+            uploadedImageDataUrl = null; uploadedImagePreview.src = '#';
+            uploadedImagePreviewContainer.style.display = 'none';
+            uploadImageFilenameDiv.textContent = ''; uploadImageFilenameDiv.style.display = 'none';
+            imageUploadInput.value = ''; 
+            promptInput.placeholder = "Describe uploaded image or enter image URL... (Enter to send)";
+        }
+
+        async function createNewBackendSession(callback) {
+            try {
+                const response = await fetch(API_CREATE_SESSION_URL, { method: 'POST' });
+                const data = await response.json();
+                if (data.status === 'success' && data.session_id) {
+                    currentBackendSessionId = data.session_id; console.log("New backend session:", currentBackendSessionId);
+                    if (callback) callback();
+                } else { addMessageToChatDOM(`Error: No backend session. ${data.message || ''}`, 'ai', 'error'); }
+            } catch (error) { addMessageToChatDOM(`Error: Network issue creating session. ${error.message}`, 'ai', 'error'); }
+        }
+
+        async function clearCurrentBackendHistory() {
+            if (!currentBackendSessionId) { alert("No active backend session."); return; }
+            if (!confirm("Clear AI's server memory for current chat?")) return;
+            try {
+                const res = await fetch(API_CLEAR_HISTORY_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentBackendSessionId })
                 });
-            }
+                const data = await res.json();
+                alert(data.status === 'success' ? (data.message || "Backend memory cleared.") : `Failed: ${data.message}`);
+            } catch (e) { alert(`Network error: ${e.message}`); }
+        }
 
-            function saveCurrentFrontendChatSession() { 
-                if (!currentChatSession || !currentChatSession.id) return;
+        function createNewFrontendChatObject(id = `ocr-chat-${Date.now()}`) {
+            return {
+                id: id, name: `Extraction ${new Date().toLocaleString()}`, 
+                systemPrompt: systemPromptInput.value || "You are an expert OCR assistant...",
+                model: modelSelect.value || DEFAULT_MODEL_ID,
+                temperature: parseFloat(temperatureSlider.value) || DEFAULT_TEMPERATURE,
+                messages: [], timestamp: Date.now()
+            };
+        }
 
-                currentChatSession.systemPrompt = systemPromptInput.value;
-                currentChatSession.model = modelSelect.value;
-                currentChatSession.temperature = parseFloat(temperatureSlider.value);
-                currentChatSession.timestamp = Date.now(); 
+        function startNewFrontendChatSession(loadDefaults = true) {
+            currentChatSession = createNewFrontendChatObject(); 
+            if (loadDefaults) { systemPromptInput.value = currentChatSession.systemPrompt; resetSettingsToDefault(); }
+            chatOutput.innerHTML = ''; renderWelcomeMessage();
+            promptInput.value = ''; clearUploadedImage(); 
+            adjustTextareaHeight(promptInput); adjustTextareaHeight(systemPromptInput);
+            updateChatPromptHeader();
+            createNewBackendSession(() => { console.log("New task, new backend session:", currentBackendSessionId); promptInput.focus(); });
+        }
 
-                if (currentChatSession.messages.length > 0 && currentChatSession.name.startsWith("Extraction ")) {
-                     const firstUserMessage = currentChatSession.messages.find(m => m.sender === 'user');
-                     if (firstUserMessage && firstUserMessage.text) { // Ensure text exists
-                        let nameAttempt = firstUserMessage.text.match(/https?:\/\/[^\s]+/); 
-                        if (nameAttempt && nameAttempt[0]) {
-                            currentChatSession.name = "OCR: " + nameAttempt[0].substring(nameAttempt[0].lastIndexOf('/') + 1).substring(0,20) + "...";
-                        } else {
-                            currentChatSession.name = "OCR: " + firstUserMessage.text.substring(0, 20) + (firstUserMessage.text.length > 20 ? '...' : '');
-                        }
-                     }
-                }
+        function saveCurrentFrontendChatSession() { 
+            if (!currentChatSession || !currentChatSession.id) return;
+            currentChatSession.systemPrompt = systemPromptInput.value;
+            currentChatSession.model = modelSelect.value;
+            currentChatSession.temperature = parseFloat(temperatureSlider.value);
+            currentChatSession.timestamp = Date.now(); 
 
-                localStorage.setItem(currentChatSession.id, JSON.stringify(currentChatSession));
-                
-                const indexEntry = chatHistoryIndex.find(entry => entry.id === currentChatSession.id);
-                if (indexEntry) {
-                    indexEntry.name = currentChatSession.name;
-                    indexEntry.timestamp = currentChatSession.timestamp;
-                } else {
-                    chatHistoryIndex.push({ 
-                        id: currentChatSession.id, 
-                        name: currentChatSession.name,
-                        timestamp: currentChatSession.timestamp 
-                    });
-                }
-                chatHistoryIndex.sort((a, b) => b.timestamp - a.timestamp); 
-                localStorage.setItem(CHAT_HISTORY_INDEX_KEY, JSON.stringify(chatHistoryIndex));
-                renderHistoryList(); 
-                console.log("Frontend OCR session saved to localStorage:", currentChatSession.id);
-            }
-
-            function loadChatHistoryIndex() { 
-                const storedIndex = localStorage.getItem(CHAT_HISTORY_INDEX_KEY);
-                if (storedIndex) {
-                    chatHistoryIndex = JSON.parse(storedIndex);
-                    chatHistoryIndex.sort((a, b) => b.timestamp - a.timestamp);
-                } else {
-                    chatHistoryIndex = [];
-                }
-                renderHistoryList();
-            }
-
-            function loadFrontendChatSession(frontendSessionId) { 
-                const sessionData = localStorage.getItem(frontendSessionId);
-                if (sessionData) {
-                    currentChatSession = JSON.parse(sessionData); 
-                    systemPromptInput.value = currentChatSession.systemPrompt;
-                    modelSelect.value = currentChatSession.model;
-                    updateTemperatureUI(currentChatSession.temperature);
-                    updateModelInfo(currentChatSession.model); 
-
-                    chatOutput.innerHTML = ''; 
-                    if (currentChatSession.messages.length > 0) {
-                        hideWelcomeMessage();
-                        currentChatSession.messages.forEach(msg => addMessageToChatDOM(msg.text, msg.sender));
+            if (currentChatSession.messages.length > 0 && currentChatSession.name.startsWith("Extraction ")) {
+                 const firstUserMsg = currentChatSession.messages.find(m => m.sender === 'user');
+                 if (firstUserMsg && firstUserMsg.text) {
+                    let name = "OCR: ";
+                    if (uploadImageFilenameDiv.style.display !== 'none' && uploadImageFilenameDiv.textContent) {
+                        name += uploadImageFilenameDiv.textContent.replace("Selected: ", "").substring(0,20) + "...";
                     } else {
-                        renderWelcomeMessage();
+                        let urlMatch = firstUserMsg.text.match(/https?:\/\/[^\s]+/);
+                        if (urlMatch && urlMatch[0]) name += urlMatch[0].substring(urlMatch[0].lastIndexOf('/') + 1).substring(0,20) + "...";
+                        else name += firstUserMsg.text.substring(0, 20) + (firstUserMsg.text.length > 20 ? '...' : '');
                     }
-                    
-                    adjustTextareaHeight(systemPromptInput);
-                    switchToChatView(); 
-                    updateChatPromptHeader();
-                    
-                    // When loading a local history, we should also clear the backend's current memory
-                    // and associate this loaded local chat with a new backend conversation segment.
-                    createNewBackendSession(() => {
-                        console.log("Loaded frontend OCR session:", frontendSessionId, "Associated with new backend session:", currentBackendSessionId);
-                        promptInput.focus();
-                    });
-                }
-            }
-            
-            function deleteFrontendChatSession(frontendSessionId, event) { 
-                event.stopPropagation(); 
-                const chatToDelete = chatHistoryIndex.find(s => s.id === frontendSessionId);
-                if (!confirm(`Are you sure you want to delete local extraction log: ${chatToDelete?.name || frontendSessionId}? This does not affect server memory of past sessions.`)) {
-                    return;
-                }
-                localStorage.removeItem(frontendSessionId);
-                chatHistoryIndex = chatHistoryIndex.filter(entry => entry.id !== frontendSessionId);
-                localStorage.setItem(CHAT_HISTORY_INDEX_KEY, JSON.stringify(chatHistoryIndex));
-                renderHistoryList();
-
-                if (currentChatSession && currentChatSession.id === frontendSessionId) {
-                    startNewFrontendChatSession(); 
-                }
-                console.log("Deleted frontend OCR session from localStorage:", frontendSessionId);
-            }
-
-            function renderHistoryList() { 
-                historyListUL.innerHTML = '';
-                chatHistoryIndex.forEach(entry => {
-                    const li = document.createElement('li');
-                    li.classList.add('history-item');
-                    li.dataset.sessionId = entry.id; 
-                    if (currentChatSession && entry.id === currentChatSession.id) {
-                        li.classList.add('selected-history');
-                    }
-
-                    const nameSpan = document.createElement('span');
-                    nameSpan.classList.add('history-item-name');
-                    nameSpan.textContent = entry.name || `Extraction ${new Date(entry.timestamp).toLocaleDateString()}`;
-                    li.appendChild(nameSpan);
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.classList.add('history-item-delete');
-                    deleteBtn.innerHTML = '×'; 
-                    deleteBtn.title = "Delete local extraction log";
-                    deleteBtn.onclick = (event) => deleteFrontendChatSession(entry.id, event);
-                    li.appendChild(deleteBtn);
-                    
-                    li.onclick = () => {
-                         document.querySelectorAll('.history-item.selected-history').forEach(item => item.classList.remove('selected-history'));
-                         li.classList.add('selected-history');
-                         loadFrontendChatSession(entry.id); 
-                    }
-                    historyListUL.appendChild(li);
-                });
-            }
-            
-            function updateChatPromptHeader() {
-                 if (currentChatSession && currentChatSession.name && !currentChatSession.name.startsWith("Extraction ")) {
-                     chatPromptHeader.textContent = currentChatSession.name;
-                 } else {
-                     chatPromptHeader.textContent = "Text Extraction";
+                    currentChatSession.name = name;
                  }
             }
+            localStorage.setItem(currentChatSession.id, JSON.stringify(currentChatSession));
+            const idxEntry = chatHistoryIndex.find(entry => entry.id === currentChatSession.id);
+            if (idxEntry) { idxEntry.name = currentChatSession.name; idxEntry.timestamp = currentChatSession.timestamp; } 
+            else { chatHistoryIndex.push({ id: currentChatSession.id, name: currentChatSession.name, timestamp: currentChatSession.timestamp }); }
+            chatHistoryIndex.sort((a, b) => b.timestamp - a.timestamp); 
+            localStorage.setItem(CHAT_HISTORY_INDEX_KEY, JSON.stringify(chatHistoryIndex));
+            renderHistoryList(); 
+        }
 
-            function populateModelDropdown() {
-                if (!modelSelect) return;
-                modelSelect.innerHTML = '';
-                chatModels.forEach(model => { 
-                    const option = document.createElement('option');
-                    option.value = model.id;
-                    option.textContent = model.name || model.id;
-                    modelSelect.appendChild(option);
-                });
+        function loadChatHistoryIndex() { 
+            const storedIdx = localStorage.getItem(CHAT_HISTORY_INDEX_KEY);
+            chatHistoryIndex = storedIdx ? JSON.parse(storedIdx).sort((a,b)=>b.timestamp-a.timestamp) : [];
+            renderHistoryList();
+        }
+
+        function loadFrontendChatSession(frontendSessionId) { 
+            const sessionData = localStorage.getItem(frontendSessionId);
+            if (sessionData) {
+                currentChatSession = JSON.parse(sessionData); 
+                systemPromptInput.value = currentChatSession.systemPrompt;
+                modelSelect.value = currentChatSession.model;
+                updateTemperatureUI(currentChatSession.temperature);
+                updateModelInfo(currentChatSession.model); 
+                clearUploadedImage(); 
+                chatOutput.innerHTML = ''; 
+                if (currentChatSession.messages.length > 0) {
+                    hideWelcomeMessage();
+                    currentChatSession.messages.forEach(msg => addMessageToChatDOM(msg.text, msg.sender, 'text', false, msg.timingStats));
+                } else { renderWelcomeMessage(); }
+                adjustTextareaHeight(systemPromptInput); switchToChatView(); updateChatPromptHeader();
+                createNewBackendSession(() => { promptInput.focus(); });
             }
+        }
+        
+        function deleteFrontendChatSession(frontendSessionId, event) { 
+            event.stopPropagation(); 
+            const chatToDel = chatHistoryIndex.find(s => s.id === frontendSessionId);
+            if (!confirm(`Delete local log: ${chatToDel?.name || frontendSessionId}?`)) return;
+            localStorage.removeItem(frontendSessionId);
+            chatHistoryIndex = chatHistoryIndex.filter(entry => entry.id !== frontendSessionId);
+            localStorage.setItem(CHAT_HISTORY_INDEX_KEY, JSON.stringify(chatHistoryIndex));
+            renderHistoryList();
+            if (currentChatSession && currentChatSession.id === frontendSessionId) startNewFrontendChatSession();
+        }
 
-            function updateModelInfo(modelId) {
-                if (!modelInfoDiv || !tokenCountSpan) return;
-                const model = modelsData.find(m => m.id === modelId);
-                if (model) {
-                    modelInfoDiv.innerHTML = `RPM: ${model.rpm || 'N/A'} | RPD: ${model.rpd || 'N/A'} <br>TPM: ${model.tpm || 'N/A'} | TPD: ${model.tpd || 'N/A'}`;
-                    if (model.contextWindow) { 
-                        tokenCountSpan.textContent = `${model.contextWindow.toLocaleString()} tokens`;
-                    } else {
-                        tokenCountSpan.textContent = "-- tokens"; 
-                    }
-                } else {
-                    modelInfoDiv.textContent = 'Model info not available.';
-                    tokenCountSpan.textContent = "-- tokens";
+        function renderHistoryList() { 
+            historyListUL.innerHTML = '';
+            chatHistoryIndex.forEach(entry => {
+                const li = document.createElement('li'); li.classList.add('history-item');
+                li.dataset.sessionId = entry.id; 
+                if (currentChatSession && entry.id === currentChatSession.id) li.classList.add('selected-history');
+                const nameSpan = document.createElement('span'); nameSpan.classList.add('history-item-name');
+                nameSpan.textContent = entry.name || `Extraction ${new Date(entry.timestamp).toLocaleDateString()}`;
+                li.appendChild(nameSpan);
+                const delBtn = document.createElement('button'); delBtn.classList.add('history-item-delete');
+                delBtn.innerHTML = '×'; delBtn.title = "Delete log";
+                delBtn.onclick = (event) => deleteFrontendChatSession(entry.id, event);
+                li.appendChild(delBtn);
+                li.onclick = () => {
+                     document.querySelectorAll('.history-item.selected-history').forEach(item => item.classList.remove('selected-history'));
+                     li.classList.add('selected-history'); loadFrontendChatSession(entry.id); 
                 }
-            }
-
-            function updateTemperatureUI(value) {
-                const val = parseFloat(value).toFixed(2); // Allow two decimal places
-                temperatureSlider.value = val;
-                temperatureValue.value = val;
-            }
-
-            function resetSettingsToDefault() {
-                modelSelect.value = DEFAULT_MODEL_ID;
-                updateModelInfo(DEFAULT_MODEL_ID);
-                updateTemperatureUI(DEFAULT_TEMPERATURE); 
-            }
-
-            function renderWelcomeMessage() {
-                if (welcomeMessageContainer) {
-                    welcomeMessageContainer.style.display = 'flex';
-                }
-            }
-            function hideWelcomeMessage() {
-                if (welcomeMessageContainer) welcomeMessageContainer.style.display = 'none';
-            }
-
-            function adjustTextareaHeight(textarea) {
-                if (textarea) {
-                    textarea.style.height = 'auto';
-                    // Use a small timeout to ensure the scrollHeight is updated after value change
-                    setTimeout(() => {
-                        textarea.style.height = (textarea.scrollHeight) + 'px';
-                    }, 0);
-                }
-            }
-
-            [promptInput, systemPromptInput].forEach(textarea => {
-                if (textarea) {
-                    textarea.addEventListener('input', () => adjustTextareaHeight(textarea));
-                    adjustTextareaHeight(textarea); 
-                }
+                historyListUL.appendChild(li);
             });
+        }
+        
+        function updateChatPromptHeader() {
+             chatPromptHeader.textContent = (currentChatSession && currentChatSession.name && !currentChatSession.name.startsWith("Extraction ")) ? 
+                                          currentChatSession.name : "Text Extraction";
+        }
 
-            temperatureSlider.addEventListener('input', (e) => updateTemperatureUI(e.target.value));
-            temperatureValue.addEventListener('input', (e) => {
-                let val = parseFloat(e.target.value);
-                if (isNaN(val)) val = DEFAULT_TEMPERATURE;
-                if (val < 0) val = 0; if (val > 1) val = 1;
-                updateTemperatureUI(val);
+        function populateModelDropdown() {
+            if (!modelSelect) return; modelSelect.innerHTML = '';
+            chatModels.forEach(model => { 
+                const opt = document.createElement('option'); opt.value = model.id;
+                opt.textContent = model.name || model.id; modelSelect.appendChild(opt);
             });
-            
-            if (modelSelect) {
-                modelSelect.addEventListener('change', (event) => {
-                    updateModelInfo(event.target.value);
-                });
-            }
+        }
 
-            function addMessageToChatDOM(text, sender, type = 'text', isStreaming = false) {
-                hideWelcomeMessage();
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('message', sender);
-                if (type === 'error') messageDiv.classList.add('error');
-                
-                const contentSpan = document.createElement('span');
-                // Render raw HTML if needed for formatting, but be cautious with user input
-                // For AI output, this can allow markdown-like features if you parse it.
-                // For now, stick to textContent for security and simplicity.
-                contentSpan.textContent = text; 
-                messageDiv.appendChild(contentSpan);
+        function updateModelInfo(modelId) {
+            if (!modelInfoDiv || !tokenCountSpan) return;
+            const model = modelsData.find(m => m.id === modelId);
+            if (model) {
+                modelInfoDiv.innerHTML = `RPM: ${model.rpm || 'N/A'} | RPD: ${model.rpd || 'N/A'} <br>TPM: ${model.tpm || 'N/A'} | TPD: ${model.tpd || 'N/A'}`;
+                tokenCountSpan.textContent = model.contextWindow ? `${model.contextWindow.toLocaleString()} tokens` : "-- tokens";
+            } else { modelInfoDiv.textContent = 'N/A'; tokenCountSpan.textContent = "-- tokens"; }
+        }
 
-                if (isStreaming && sender === 'ai') {
-                    const cursorSpan = document.createElement('span');
-                    cursorSpan.classList.add('cursor');
-                    messageDiv.appendChild(cursorSpan);
-                    messageDiv.dataset.streaming = "true"; 
-                }
-                
-                chatOutput.appendChild(messageDiv);
-                chatOutput.scrollTop = chatOutput.scrollHeight;
-                return messageDiv; 
-            }
-
-            function updateStreamingMessage(aiMessageDiv, chunk) {
-                if (aiMessageDiv && aiMessageDiv.dataset.streaming === "true") {
-                    const contentSpan = aiMessageDiv.querySelector('span:not(.cursor)');
-                    if (contentSpan) {
-                        contentSpan.textContent += chunk;
-                        chatOutput.scrollTop = chatOutput.scrollHeight;
-                    }
-                }
-            }
-
-            function finalizeStreamingMessage(aiMessageDiv) {
-                if (aiMessageDiv && aiMessageDiv.dataset.streaming === "true") {
-                    const cursor = aiMessageDiv.querySelector('.cursor');
-                    if (cursor) cursor.remove();
-                    delete aiMessageDiv.dataset.streaming;
-                    chatOutput.scrollTop = chatOutput.scrollHeight; // Ensure scrolled to bottom after finalization
-                }
-            }
-
-            const handleRunPrompt = async () => {
-                if (!currentBackendSessionId) {
-                    addMessageToChatDOM("Error: No active backend session. Please try creating a new task or reloading.", 'ai', 'error');
-                    await createNewBackendSession(() => {
-                        if(currentBackendSessionId) {
-                             addMessageToChatDOM("New backend session started. Please try your prompt again.", 'ai'); // not an error
-                        }
-                    });
-                    return;
-                }
-
-                const userPromptText = promptInput.value.trim();
-                if (!userPromptText) {
-                    promptInput.focus();
-                    return;
-                }
-
-                addMessageToChatDOM(userPromptText, 'user');
-                currentChatSession.messages.push({ sender: 'user', text: userPromptText }); // Store raw user text locally
-                
-                if (currentChatSession.messages.filter(m => m.sender === 'user').length === 1 && currentChatSession.name.startsWith("Extraction ")) {
-                     let nameAttempt = userPromptText.match(/https?:\/\/[^\s/$.?#].[^\s]*\.(?:jpg|jpeg|png|gif|webp)/i);
-                     if (nameAttempt && nameAttempt[0]) {
-                        currentChatSession.name = "OCR: " + nameAttempt[0].substring(nameAttempt[0].lastIndexOf('/') + 1).substring(0,20) + "...";
-                     } else {
-                        currentChatSession.name = "OCR: " + userPromptText.substring(0, 20) + (userPromptText.length > 20 ? '...' : '');
-                     }
-                     updateChatPromptHeader(); 
-                }
-
-                promptInput.value = '';
-                adjustTextareaHeight(promptInput);
-                runButton.disabled = true;
-                let aiMessageDiv = addMessageToChatDOM("", 'ai', 'text', true); 
-                let fullAiResponseText = "";
-
-                const payload = {
-                    session_id: currentBackendSessionId, 
-                    prompt: userPromptText, // Send the raw prompt; backend will parse URL
-                    system_prompt: systemPromptInput.value.trim(),
-                    temperature: parseFloat(temperatureSlider.value),
-                    model_id: modelSelect.value,
-                };
-                
-                try {
-                    const response = await fetch(API_CHAT_URL, { 
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        finalizeStreamingMessage(aiMessageDiv);
-                        if (aiMessageDiv) aiMessageDiv.remove(); 
-                        const errorData = await response.json().catch(() => ({error: "Server error with non-JSON response."}));
-                        addMessageToChatDOM(errorData.error || `HTTP error! status: ${response.status}`, 'ai', 'error');
-                        // Don't throw here, as the error is displayed. Let finally run.
-                        return; // Exit after displaying error
-                    }
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    let streamEnded = false;
-
-                    while (!streamEnded) {
-                        const { value, done } = await reader.read();
-                        if (done) {
-                            streamEnded = true;
-                            break;
-                        }
-                        
-                        const sseLines = decoder.decode(value, { stream: true }).split('\n\n');
-                        for (const line of sseLines) {
-                            if (line.startsWith('data:')) {
-                                try {
-                                    const jsonData = JSON.parse(line.substring(5).trim());
-                                    if (jsonData.error) {
-                                        console.error("Stream error from backend:", jsonData.error);
-                                        fullAiResponseText += `\n[Error: ${jsonData.error}]`; 
-                                        updateStreamingMessage(aiMessageDiv, `\n[Error: ${jsonData.error}]`);
-                                        if(jsonData.is_final) { streamEnded = true; break;}
-                                    } else if (jsonData.text_chunk) {
-                                        fullAiResponseText += jsonData.text_chunk;
-                                        updateStreamingMessage(aiMessageDiv, jsonData.text_chunk);
-                                    }
-
-                                    if (jsonData.is_final) {
-                                        if(jsonData.full_response && jsonData.full_response !== fullAiResponseText){ 
-                                            // If backend provides a final full_response, prefer it
-                                            fullAiResponseText = jsonData.full_response;
-                                            const contentSpan = aiMessageDiv.querySelector('span:not(.cursor)');
-                                            if(contentSpan) contentSpan.textContent = fullAiResponseText; // Update DOM with final
-                                        }
-                                        streamEnded = true; 
-                                        break; 
-                                    }
-                                } catch (e) {
-                                    console.warn("Error parsing SSE JSON:", e, "Line:", line);
-                                }
-                            }
-                        }
-                    }
-                    // Finalize outside the loop, after stream has fully ended
-                    finalizeStreamingMessage(aiMessageDiv);
-                    if (fullAiResponseText || !aiMessageDiv.querySelector('span:not(.cursor)')?.textContent) { // Add if response is not empty OR if div is empty
-                        currentChatSession.messages.push({ sender: 'ai', text: fullAiResponseText });
-                    }
-                    saveCurrentFrontendChatSession(); 
-
-                } catch (error) { // Network errors or other non-SSE errors
-                    console.error('Fetch/Stream Client-Side Error:', error);
-                    finalizeStreamingMessage(aiMessageDiv);
-                    // If aiMessageDiv is still empty, remove it and add a new error message.
-                    // Otherwise, append error to existing content or mark it.
-                    if (aiMessageDiv && (!aiMessageDiv.querySelector('span:not(.cursor)') || !aiMessageDiv.querySelector('span:not(.cursor)').textContent.trim())) {
-                        if(aiMessageDiv) aiMessageDiv.remove();
-                        addMessageToChatDOM(`Client-side error: ${error.message}`, 'ai', 'error');
-                    } else if (aiMessageDiv) { 
-                         // aiMessageDiv.classList.add('error'); // Visually mark as error
-                         updateStreamingMessage(aiMessageDiv, `\n[Client-side Error: ${error.message}]`);
-                    }
-                    currentChatSession.messages.push({ sender: 'ai', text: `Client-side Error: ${error.message}` }); 
-                    saveCurrentFrontendChatSession(); 
-                } finally {
-                    runButton.disabled = false;
-                    promptInput.focus();
-                }
-            };
-
-            function switchToChatView() {
-                mainChatContent.classList.remove('hidden-view');
-                rightSettingsSidebar.classList.remove('hidden-view');
-                historyPanelDisplay.style.display = 'none';
-                promptInput.focus();
-                renderHistoryList(); // Update selection in history list
-            }
-
-            function switchToHistoryView() {
-                mainChatContent.classList.add('hidden-view');
-                rightSettingsSidebar.classList.add('hidden-view');
-                historyPanelDisplay.style.display = 'block';
-                renderHistoryList(); 
-            }
-
-            function handleNavClick(navItem) {
-                document.querySelectorAll('.left-sidebar nav li.active').forEach(li => li.classList.remove('active'));
-                navItem.classList.add('active');
-                
-                if (navItem.id === 'nav-chat') {
-                    switchToChatView();
-                } else if (navItem.id === 'nav-history') {
-                    switchToHistoryView();
-                } else { 
-                    let featureName = navItem.textContent.replace(/<span class="icon">.*?<\/span>/i, '').trim();
-                    alert(`The "${featureName}" interface would load here. (Placeholder)`);
-                    switchToChatView(); 
-                    if (navChat) {
-                        document.querySelectorAll('.left-sidebar nav li.active').forEach(li => li.classList.remove('active'));
-                        navChat.classList.add('active'); 
-                    }
-                }
-            }
-
-            if (newChatBtn) newChatBtn.addEventListener('click', () => startNewFrontendChatSession());
-            if (clearBackendHistoryBtn) clearBackendHistoryBtn.addEventListener('click', clearCurrentBackendHistory);
-            if (resetSettingsBtn) resetSettingsBtn.addEventListener('click', () => { resetSettingsToDefault(); promptInput.focus(); });
-            if (runButton) runButton.addEventListener('click', handleRunPrompt);
-            
-            promptInput.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    handleRunPrompt();
-                } else if (event.ctrlKey && (event.key === 'n' || event.key === 'N')) { 
-                    event.preventDefault();
-                    startNewFrontendChatSession();
-                }
-            });
-
-            suggestionButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    promptInput.value = button.textContent;
-                    adjustTextareaHeight(promptInput);
-                    promptInput.focus();
-                });
-            });
-            
-            if (navChat) navChat.addEventListener('click', () => handleNavClick(navChat));
-            if (navHistory) navHistory.addEventListener('click', () => handleNavClick(navHistory));
-
-            initializeApp();
+        function updateTemperatureUI(value) {
+            const val = parseFloat(value).toFixed(2);
+            temperatureSlider.value = val; temperatureValue.value = val;
+        }
+        function resetSettingsToDefault() {
+            modelSelect.value = DEFAULT_MODEL_ID; updateModelInfo(DEFAULT_MODEL_ID);
+            updateTemperatureUI(DEFAULT_TEMPERATURE); 
+        }
+        function renderWelcomeMessage() { if (welcomeMessageContainer) welcomeMessageContainer.style.display = 'flex'; }
+        function hideWelcomeMessage() { if (welcomeMessageContainer) welcomeMessageContainer.style.display = 'none'; }
+        function adjustTextareaHeight(textarea) {
+            if (textarea) { textarea.style.height = 'auto';
+                setTimeout(() => { textarea.style.height = (textarea.scrollHeight) + 'px'; }, 0); }
+        }
+        [promptInput, systemPromptInput].forEach(ta => {
+            if (ta) { ta.addEventListener('input', () => adjustTextareaHeight(ta)); adjustTextareaHeight(ta); }
         });
+        temperatureSlider.addEventListener('input', (e) => updateTemperatureUI(e.target.value));
+        temperatureValue.addEventListener('input', (e) => {
+            let val = parseFloat(e.target.value); if (isNaN(val)) val = DEFAULT_TEMPERATURE;
+            val = Math.max(0, Math.min(1, val)); updateTemperatureUI(val);
+        });
+        if (modelSelect) modelSelect.addEventListener('change', (e) => updateModelInfo(e.target.value));
+
+        function addMessageToChatDOM(text, sender, type = 'text', isStreaming = false, timingStats = null) {
+            hideWelcomeMessage(); const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', sender); if (type === 'error') msgDiv.classList.add('error');
+            const contentSpan = document.createElement('span'); contentSpan.textContent = text; 
+            msgDiv.appendChild(contentSpan);
+            if (isStreaming && sender === 'ai') {
+                const cursor = document.createElement('span'); cursor.classList.add('cursor');
+                msgDiv.appendChild(cursor); msgDiv.dataset.streaming = "true"; 
+            }
+            if (sender === 'ai' && !isStreaming && timingStats) appendTimingInfoToMessage(msgDiv, timingStats);
+            chatOutput.appendChild(msgDiv); chatOutput.scrollTop = chatOutput.scrollHeight; return msgDiv; 
+        }
+
+        function appendTimingInfoToMessage(messageDiv, timingStats) {
+            if (!messageDiv || !timingStats) return;
+            let existingTiming = messageDiv.querySelector('.response-time-info');
+            if (existingTiming) existingTiming.remove();
+            const timingDiv = document.createElement('div'); timingDiv.classList.add('response-time-info');
+            let timingText = "";
+            if (timingStats.first_token_time_ms >= 0) timingText += `TTFT: ${timingStats.first_token_time_ms}ms`;
+            if (timingStats.full_generation_time_ms >= 0) timingText += `${timingText ? " | " : ""}Gen: ${timingStats.full_generation_time_ms}ms`;
+            if (timingStats.client_total_request_time_ms >= 0) timingText += `${timingText ? " | " : ""}Total: ${timingStats.client_total_request_time_ms}ms`;
+            if (timingText) { timingDiv.textContent = timingText; messageDiv.appendChild(timingDiv); }
+        }
+
+        function updateStreamingMessage(aiMessageDiv, chunk) {
+            if (aiMessageDiv?.dataset.streaming === "true") {
+                const content = aiMessageDiv.querySelector('span:not(.cursor)');
+                if (content) { content.textContent += chunk; chatOutput.scrollTop = chatOutput.scrollHeight; }
+            }
+        }
+        function finalizeStreamingMessage(aiMessageDiv, timingStats = null, clientTotalRequestTimeMs = null) { 
+            if (aiMessageDiv?.dataset.streaming === "true") {
+                const cursor = aiMessageDiv.querySelector('.cursor'); if (cursor) cursor.remove();
+                delete aiMessageDiv.dataset.streaming;
+                if (timingStats) {
+                    if (clientTotalRequestTimeMs !== null) timingStats.client_total_request_time_ms = clientTotalRequestTimeMs;
+                    appendTimingInfoToMessage(aiMessageDiv, timingStats);
+                }
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+            }
+        }
+
+        const handleRunPrompt = async () => {
+            currentRequestStartTime = performance.now(); 
+            if (!currentBackendSessionId) {
+                addMessageToChatDOM("Error: No backend session.", 'ai', 'error');
+                await createNewBackendSession(() => { if(currentBackendSessionId) addMessageToChatDOM("New session. Try again.", 'ai'); });
+                return;
+            }
+            const userPromptText = promptInput.value.trim();
+            if (!userPromptText && !uploadedImageDataUrl) { 
+                alert("Please enter a prompt or upload an image."); promptInput.focus(); return;
+            }
+            const displayMsgText = uploadedImageDataUrl ? (userPromptText ? `Image + "${userPromptText}"` : "Image Uploaded") : userPromptText;
+            addMessageToChatDOM(displayMsgText, 'user');
+            currentChatSession.messages.push({ sender: 'user', text: displayMsgText, timestamp: Date.now() }); // Added timestamp to user message
+            
+            if (currentChatSession.messages.filter(m => m.sender === 'user').length === 1 && currentChatSession.name.startsWith("Extraction ")) {
+                 let name = "OCR: ";
+                 if (uploadImageFilenameDiv.style.display !== 'none' && uploadImageFilenameDiv.textContent) {
+                     name += uploadImageFilenameDiv.textContent.replace("Selected: ", "").substring(0,20) + "...";
+                 } else {
+                     let urlMatch = userPromptText.match(/https?:\/\/[^\s/$.?#].[^\s]*\.(?:jpg|jpeg|png|gif|webp)/i);
+                     if (urlMatch && urlMatch[0]) name += urlMatch[0].substring(urlMatch[0].lastIndexOf('/') + 1).substring(0,20) + "...";
+                     else name += userPromptText.substring(0, 20) + (userPromptText.length > 20 ? '...' : '');
+                 }
+                 currentChatSession.name = name; updateChatPromptHeader(); 
+            }
+
+            promptInput.value = ''; adjustTextareaHeight(promptInput); runButton.disabled = true;
+            let aiMsgDiv = addMessageToChatDOM("", 'ai', 'text', true); 
+            let fullAiResponseText = ""; let finalTimingStats = null;
+
+            const payload = {
+                session_id: currentBackendSessionId, prompt: userPromptText, image_data_url: uploadedImageDataUrl,
+                system_prompt: systemPromptInput.value.trim(), temperature: parseFloat(temperatureSlider.value),
+                model_id: modelSelect.value,
+            };
+            
+            try {
+                const response = await fetch(API_CHAT_URL, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                });
+                const clientReqTimeMs = Math.round(performance.now() - currentRequestStartTime);
+                if (!response.ok) {
+                    finalizeStreamingMessage(aiMsgDiv, null, clientReqTimeMs); if (aiMsgDiv) aiMsgDiv.remove(); 
+                    const errData = await response.json().catch(() => ({error: "Server error."}));
+                    addMessageToChatDOM(errData.error || `HTTP error ${response.status}`, 'ai', 'error', false, {client_total_request_time_ms: clientReqTimeMs}); return;
+                }
+                const reader = response.body.getReader(); const decoder = new TextDecoder(); let streamEnded = false;
+                while (!streamEnded) {
+                    const { value, done } = await reader.read(); if (done) { streamEnded = true; break; }
+                    const sseLines = decoder.decode(value, { stream: true }).split('\n\n');
+                    for (const line of sseLines) {
+                        if (line.startsWith('data:')) {
+                            try {
+                                const jsonData = JSON.parse(line.substring(5).trim());
+                                if (jsonData.error) {
+                                    fullAiResponseText += `\n[Error: ${jsonData.error}]`; 
+                                    updateStreamingMessage(aiMsgDiv, `\n[Error: ${jsonData.error}]`);
+                                    if(jsonData.is_final) { streamEnded = true; finalTimingStats = jsonData.response_time_stats || null; break;}
+                                } else if (jsonData.text_chunk) {
+                                    fullAiResponseText += jsonData.text_chunk; updateStreamingMessage(aiMsgDiv, jsonData.text_chunk);
+                                }
+                                if (jsonData.is_final) {
+                                    if (jsonData.response_time_stats) finalTimingStats = jsonData.response_time_stats;
+                                    if(jsonData.full_response && jsonData.full_response !== fullAiResponseText){ 
+                                        fullAiResponseText = jsonData.full_response;
+                                        const content = aiMsgDiv.querySelector('span:not(.cursor)');
+                                        if(content) content.textContent = fullAiResponseText;
+                                    }
+                                    streamEnded = true; break; 
+                                }
+                            } catch (e) { console.warn("SSE JSON parse error:", e, "Line:", line); }
+                        }
+                    }
+                }
+                const clientTotalTime = Math.round(performance.now() - currentRequestStartTime);
+                finalizeStreamingMessage(aiMsgDiv, finalTimingStats, clientTotalTime);
+                currentChatSession.messages.push({ 
+                    sender: 'ai', text: fullAiResponseText,  timestamp: Date.now(), // Added timestamp
+                    timingStats: finalTimingStats ? { ...finalTimingStats, client_total_request_time_ms: clientTotalTime } : 
+                                                  { client_total_request_time_ms: clientTotalTime }
+                });
+                saveCurrentFrontendChatSession(); 
+            } catch (error) { 
+                const clientTotalTime = Math.round(performance.now() - currentRequestStartTime);
+                finalizeStreamingMessage(aiMsgDiv, null, clientTotalTime);
+                let errorText = `Client-Side Error: ${error.message}`;
+                if (aiMsgDiv && (!aiMsgDiv.querySelector('span:not(.cursor)') || !aiMsgDiv.querySelector('span:not(.cursor)').textContent.trim())) {
+                    if(aiMsgDiv) aiMsgDiv.remove();
+                    addMessageToChatDOM(errorText, 'ai', 'error', false, {client_total_request_time_ms: clientTotalTime});
+                } else if (aiMsgDiv) { updateStreamingMessage(aiMsgDiv, `\n[${errorText}]`); }
+                currentChatSession.messages.push({ sender: 'ai', text: errorText, timestamp: Date.now(), timingStats: { client_total_request_time_ms: clientTotalTime } }); 
+                saveCurrentFrontendChatSession(); 
+            } finally { runButton.disabled = false; promptInput.focus(); }
+        };
+
+        function switchToChatView() {
+            document.getElementById('main-chat-content').classList.remove('hidden-view');
+            document.getElementById('right-settings-sidebar').classList.remove('hidden-view');
+            document.getElementById('history-panel-display').style.display = 'none';
+            promptInput.focus(); renderHistoryList();
+        }
+        function switchToHistoryView() {
+            document.getElementById('main-chat-content').classList.add('hidden-view');
+            document.getElementById('right-settings-sidebar').classList.add('hidden-view');
+            document.getElementById('history-panel-display').style.display = 'block';
+            renderHistoryList(); 
+        }
+        function handleNavClick(navItem) {
+            document.querySelectorAll('.left-sidebar nav li.active').forEach(li => li.classList.remove('active'));
+            navItem.classList.add('active');
+            if (navItem.id === 'nav-chat') switchToChatView(); 
+            else if (navItem.id === 'nav-history') switchToHistoryView(); 
+            else { 
+                alert(`"${navItem.textContent.replace(/<span class="icon">.*?<\/span>/i, '').trim()}" (Placeholder)`);
+                switchToChatView(); 
+                if (document.getElementById('nav-chat')) {
+                    document.querySelectorAll('.left-sidebar nav li.active').forEach(li => li.classList.remove('active'));
+                    document.getElementById('nav-chat').classList.add('active'); 
+                }
+            }
+        }
+        if (newChatBtn) newChatBtn.addEventListener('click', () => startNewFrontendChatSession());
+        if (clearBackendHistoryBtn) clearBackendHistoryBtn.addEventListener('click', clearCurrentBackendHistory);
+        if (resetSettingsBtn) resetSettingsBtn.addEventListener('click', () => { resetSettingsToDefault(); promptInput.focus(); });
+        if (runButton) runButton.addEventListener('click', handleRunPrompt);
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleRunPrompt(); } 
+            else if (e.ctrlKey && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); startNewFrontendChatSession(); }
+        });
+        suggestionButtons.forEach(btn => {
+            btn.addEventListener('click', () => { promptInput.value = btn.textContent; adjustTextareaHeight(promptInput); promptInput.focus(); });
+        });
+        if (navChat) navChat.addEventListener('click', () => handleNavClick(navChat));
+        if (navHistory) navHistory.addEventListener('click', () => handleNavClick(navHistory));
+
+        initializeApp();
+    });
     </script>
 </body>
 </html>
