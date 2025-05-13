@@ -6,7 +6,6 @@
 
 A powerful, self-hosted OCR (Optical Character Recognition) and image analysis application built on Unsloth's quantized Qwen2.5-VL vision-language model. This application provides both a user-friendly web interface and a backend API for extracting text from images and analyzing visual content.
 
-![Qwen OCR Bot Demo](https://raw.githubusercontent.com/SakibAhmedShuva/Qwen-OCR-Bot/main/docs/demo-screenshot.png)
 
 ![image](https://github.com/user-attachments/assets/f15e6d14-104e-46a7-801a-02168022170c)
 
