@@ -150,7 +150,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
@@ -158,6 +158,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Qwen Team](https://github.com/QwenLM/Qwen-VL) for the Qwen2.5-VL model
 - [HuggingFace](https://huggingface.co/) for model hosting and transformers library
 
----
-
-Created by [Sakib Ahmed Shuva](https://github.com/SakibAhmedShuva)
